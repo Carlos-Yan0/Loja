@@ -1,0 +1,12 @@
+{
+  "name": "backend",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "scripts": {
+    "dev": "bun run src/server.js",
+    "start": "bun src/server.js"
+  }
+}

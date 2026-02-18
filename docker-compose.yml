@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: loja_user
+      POSTGRES_PASSWORD: loja_pass
+      POSTGRES_DB: loja_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - loja_net
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "postgresql://loja_user:loja_pass@db:5432/loja_db"
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    networks:
+      - loja_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    networks:
+      - loja_net
+
+volumes:
+  pgdata:
+
+networks:
+  loja_net:
