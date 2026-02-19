@@ -1,0 +1,21 @@
+{
+  "name": "loja",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "bun --cwd apps/backend run server.js",
+    "dev:frontend": "bun --cwd apps/frontend run dev",
+    "dev": "bun run dev:backend & bun run dev:frontend"
+  },
+  "devDependencies": {
+    "prisma": "^7.4.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.4.0"
+  }
+}
