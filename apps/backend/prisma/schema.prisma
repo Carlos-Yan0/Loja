@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ENUMS
+enum Role {
+  ADMIN
+  CUSTOMER
+  GUEST
+}
+
+
+enum OrderStatus {
+  COMPLETED
+  PROCESSING
+  CANCELED
+  DELIVERED
+  IN_TRANSIT
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  BOLETO
+}
+
+//MODELS
+
+model User {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  role Role @default(CUSTOMER)
+  phone String?
+
+  orders Order[]
+  addres Address[]
+}
+
+model Produt {
+  id String @id @default(uuid())
+  name String
+  price Float
+  category String
+  tags String?
+  stock Int @default(0)
+  images String[]
+  
+  orderItems OrderItem[]
+
+  @@index([category])
+}
+
+model Address {
+  id String @id @default(uuid())
+  cep String //Cep is the brazillian ZipCode 
+  street String
+  number String
+  complement String?
+
+  UserId String
+  user User @relation(fields: [UserId], references: [id])
+}
+
+model Order {
+  id String @id @default(uuid())
+  status OrderStatus @default(PROCESSING)
+  total Float
+  shipping Float @default(0)
+  PayMethod PaymentMethod
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+}
+
+model OrderItem {
+  id String @id @default(uuid())
+  quantity Int
+  price Float
+  
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+
+  productid String
+  product Produt @relation(fields: [productid], references: [id])
+}
