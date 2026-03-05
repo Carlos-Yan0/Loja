@@ -1,0 +1,51 @@
+POST http://localhost:3001/users
+Content-Type: application/json
+
+{
+    "name": "Yan 2",
+    "email": "Yan2@gmail.com",
+    "password": "123456",
+    "phone": ""
+}
+
+###PUT
+PUT http://localhost:3001/users/db0dc54e-8968-4efe-a9c4-e69f0460eeae
+Content-Type: application/json
+
+{
+    "name": "Yan",
+    "email": "Yan@gmail.com",
+    "password": "123456",
+    "phone": "",
+    "role": "ADMIN"
+}
+
+###GET
+GET http://localhost:3001/users
+
+###PRODUCTS
+POST http://localhost:3001/products
+Content-Type: application/json
+
+{
+    "name": "Product 2",
+    "price": 100,
+    "category": "Category 1",
+    "tags": "Tag 1",
+    "stock": 100,
+    "images": ["image1.jpg", "image2.jpg"]
+}
+
+###GET
+
+GET http://localhost:3001/products
+
+###GET BY ID
+GET http://localhost:3001/products/2e7ce91a-24f1-4ed2-beea-c380a82ece6a
+
+###UPDATE
+PUT http://localhost:3001/products/1
+
+###DELETE
+DELETE http://localhost:3001/products/e6e447e4-7b24-40da-b7e8-2a37d962b58b
+
