@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const App = express();
 const PORT = 3001
 
-const {router} = require('./routes/routes');
+import {router} from './routes/routes.js';
 
 App.use(express.json());
 
