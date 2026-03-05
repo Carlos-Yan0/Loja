@@ -1,27 +1,45 @@
-const {prisma} = require('../libs/prisma');
+import { prisma } from '../libs/prisma.js';
+
+/** a object to select only the fields that we need */
+const userSafeSelect = {
+  id: true,
+  name: true,
+  role: true,
+};
 
 const userService = {
 
-    async criar(data){
-        const user = await prisma.user.create({data});
-        return user;
-    },
+  async create(data) {
+    await prisma.user.create({ data });
+  },
 
-    async buscarTodos() {
-        return await prisma.user.findMany();
-    },
+  async findAll() {
+    return await prisma.user.findMany({
+      select: userSafeSelect,
+    });
+  },
 
-    async buscarPorId(id) {
-        return await prisma.user.findUnique({where: {id}});
-    },
+  async findById(id) {
+    return await prisma.user.findUnique({
+      where: { id },
+      select: userSafeSelect,
+    });
+  },
 
-    async atualizar(id, data){
-        return await prisma.user.update({where: {id}, data});
-    },
+  async update(id, data) {
+    const clean = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined)
+    );
+    return await prisma.user.update({
+      where: { id },
+      data: clean,
+      select: userSafeSelect,
+    });
+  },
 
-    async deletar(id) {
-        return await prisma.user.delete({where: {id}});
-    },
-}
+  async delete(id) {
+    return await prisma.user.delete({ where: { id } });
+  },
+};
 
-module.exports = {userService};
+export {userService};
