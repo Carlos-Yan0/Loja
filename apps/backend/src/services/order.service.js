@@ -1,8 +1,21 @@
 import { prisma } from '../libs/prisma.js';
 
 const orderService = {
-    async create(data) {
-        await prisma.order.create({ data });
+    async create({userId, total, PayMethod, items}) {
+        await prisma.order.create({
+            data: {
+                userId,
+                total,
+                PayMethod,
+                items: {
+                    create: items.map(i => ({
+                        productId: i.productId,
+                        quantity: i.quantity,
+                        price: i.price
+                    }))
+                }
+            }
+        });
     },
     async findAll() {
         return await prisma.order.findMany();
@@ -12,9 +25,6 @@ const orderService = {
     },
     async update(id, data) {
         return await prisma.order.update({ where: { id }, data });
-    },
-    async delete(id) {
-        return await prisma.order.delete({ where: { id } });
     },
 }
 
