@@ -2,19 +2,19 @@ POST http://localhost:3001/users
 Content-Type: application/json
 
 {
-    "name": "Yan 2",
-    "email": "Yan2@gmail.com",
+    "name": "valdeci",
+    "email": "valdeci@gmail.com",
     "password": "123456",
     "phone": ""
 }
 
 ###PUT
-PUT http://localhost:3001/users/db0dc54e-8968-4efe-a9c4-e69f0460eeae
+PUT http://localhost:3001/users/389c990c-c732-4323-bf22-79980632ef05
 Content-Type: application/json
 
 {
-    "name": "Yan",
-    "email": "Yan@gmail.com",
+    "name": "valdeci 2",
+    "email": "valdeci2@gmail.com",
     "password": "123456",
     "phone": "",
     "role": "ADMIN"
@@ -49,3 +49,30 @@ PUT http://localhost:3001/products/1
 ###DELETE
 DELETE http://localhost:3001/products/e6e447e4-7b24-40da-b7e8-2a37d962b58b
 
+###ORDERS
+POST http://localhost:3001/orders
+content-type: application/json
+
+{
+    "userId": "db0dc54e-8968-4efe-a9c4-e69f0460eeae",
+    "PayMethod": "PIX",
+    "items": [
+        {
+            "productId": "2c439f5c-e950-46c3-95c5-5b1ea7f57cd6",
+            "quantity": 1,
+            "price": 100
+        }
+    ]
+}
+
+###GET
+GET http://localhost:3001/orders
+
+###DELETE
+
+PUT http://localhost:3001/orders/bd7e38f9-e035-44c9-9167-208a86d81ab4
+Content-Type: application/json
+
+{
+    "status": "CANCELED" 
+}
