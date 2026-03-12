@@ -1,14 +1,16 @@
 import {userService} from '../services/user.service.js';
+import bcrypt from 'bcrypt';
 
 const userController = {
     async create(req, res) {
         try {
             const {name, email, password, phone} = req.body;
-            await userService.create({name, email, password, phone});
+            const hashedPassword = await bcrypt.hash(password, 10)
+            await userService.create({name, email, password: hashedPassword, phone});
 
             return res.status(201).json({message: "created user sucessfully"});
         } catch(err) {
-            return res.status(500).json({message: "failed to create a user"});
+            return res.status(500).json({ message: "failed to create a user" });
         }
     },
     async findAll(req, res){
