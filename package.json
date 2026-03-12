@@ -16,7 +16,6 @@
     "prisma": "^7.4.0"
   },
   "dependencies": {
-    "@prisma/client": "^7.4.1",
-    "jsonwebtoken": "^9.0.3"
+    "@prisma/client": "^7.4.1"
   }
 }
