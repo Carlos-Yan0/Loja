@@ -17,7 +17,6 @@ datasource db {
 enum Role {
   ADMIN
   CUSTOMER
-  GUEST
 }
 
 
