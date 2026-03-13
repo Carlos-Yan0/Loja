@@ -1,24 +1,21 @@
 import jwt from 'jsonwebtoken';
+import { ACCESS_TOKEN_SECRET } from '../libs/jwt';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+export function authMiddleware(req, res, next) {
+    const token = req.cookies.accessToken;
+    
+    if(!token){
+        return res.status(401).json({ message: "Não autenticado" });
+    }
 
-export function authMiddleware(req, res, next){
-    const authHeader = req.headers.authorization;
-    if(!authHeader){
-        return res.status(401).json({ message: "missing authorization header" });
-    };
-
-    const [type, token] = authHeader.split(' ');
-    if(type !== 'Bearer' || !token){
-        return res.status(401).json({message: "invalid authorization format" });
-    };
-
-    try{
-        const payload = jwt.verify(token, JWT_SECRET);
-        req.user = payload;
-        return next();
-    } catch(err) {
-        return res.status(401).json({ message: "invalid or expired token" });
-    };
-};
+    jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if(err) {
+            if(err.name === 'TokenExpiredError'){
+                return res.status(401).json({ message: "TOKEN_EXPIRED" });
+            }
+        }
+        req.userId = decoded.sub;
+        next()
+    })
+}
 
