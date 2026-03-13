@@ -2,8 +2,8 @@ POST http://localhost:3001/users
 Content-Type: application/json
 
 {
-    "name": "valdeci",
-    "email": "valdeci@gmail.com",
+    "name": "Yan",
+    "email": "Yan@gmail.com",
     "password": "123456",
     "phone": ""
 }
@@ -75,4 +75,13 @@ Content-Type: application/json
 
 {
     "status": "CANCELED" 
+}
+
+###LOGIN
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+    "email": "Yan@gmail.com",
+    "password": "123456"
 }
