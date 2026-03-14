@@ -1,0 +1,108 @@
+.page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-2xl);
+  border: 1px solid var(--color-border);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  color: var(--color-primary);
+  margin: 0 0 var(--space-xs);
+  text-align: center;
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin: 0 0 var(--space-xl);
+  text-align: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.success {
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: var(--space-sm);
+  background: rgba(139, 69, 18, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.error {
+  color: var(--color-price);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: var(--space-sm);
+  background: rgba(196, 30, 58, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.input {
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(139, 69, 18, 0.2);
+}
+
+.submit {
+  padding: var(--space-md) var(--space-xl);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: var(--space-sm);
+  transition: background 0.2s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.footer {
+  margin: var(--space-xl) 0 0;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
