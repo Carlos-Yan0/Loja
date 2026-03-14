@@ -85,3 +85,7 @@ Content-Type: application/json
     "email": "Yan@gmail.com",
     "password": "123456"
 }
+
+###Logout
+
+POST http://localhost:3001/auth/logout
