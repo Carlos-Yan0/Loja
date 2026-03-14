@@ -65,5 +65,19 @@ export const authController = {
                 maxAge: 60 * 60 * 1000,
             }).json({ message: "New token created" });
         });    
+    },
+
+    async logout(req, res) {
+        return res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            path: '/',
+        }).clearCookie('accessToken', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+            path: '/',
+        }).json({ message: "Logout Realizado" });
     }
 };
