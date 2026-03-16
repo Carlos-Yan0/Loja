@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
+
 const App = express();
-const PORT = 3001
+const PORT = process.env.PORT || 3001;
 
 import {router} from './routes/routes.js';
 
