@@ -5,7 +5,7 @@ import { generateAccessToken, generateRefreshToken, REFRESH_TOKEN_SECRET } from 
 
 export const authController = {
     async me(req, res) {
-        return res.json({ id: req.userId });
+        return res.json({ id: req.userId, role: req.role });
     },
     async login(req, res) {
         try{
@@ -29,7 +29,7 @@ export const authController = {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 100,
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             }).cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: true,
