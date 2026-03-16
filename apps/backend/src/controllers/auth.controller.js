@@ -4,6 +4,9 @@ import { prisma } from '../libs/prisma';
 import { generateAccessToken, generateRefreshToken, REFRESH_TOKEN_SECRET } from '../libs/jwt';
 
 export const authController = {
+    async me(req, res) {
+        return res.json({ id: req.userId });
+    },
     async login(req, res) {
         try{
             const {email, password} = req.body;
