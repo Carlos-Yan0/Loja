@@ -28,12 +28,12 @@ export const authController = {
            return res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             }).cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 60 * 60 * 1000,
             }).json({ message: "Login successfully"});
 
@@ -59,12 +59,12 @@ export const authController = {
             return res.cookie('refreshToken', newRefreshToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             }).cookie('accessToken', newAccessToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'strict',
+                sameSite: 'none',
                 maxAge: 60 * 60 * 1000,
             }).json({ message: "New token created" });
         });    
@@ -74,12 +74,12 @@ export const authController = {
         return res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'none',
             path: '/',
         }).clearCookie('accessToken', {
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'none',
             path: '/',
         }).json({ message: "Logout Realizado" });
     }
