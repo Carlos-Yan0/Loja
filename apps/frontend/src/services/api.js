@@ -1,4 +1,7 @@
-const BASE = '/api';
+// Em produção usa VITE_API_URL (URL completa do backend). Em dev usa /api (proxy do Vite).
+const BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '')
+  : '/api';
 
 function getCredentials() {
   return 'include';
