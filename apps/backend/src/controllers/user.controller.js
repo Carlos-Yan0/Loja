@@ -10,6 +10,9 @@ const userController = {
 
             return res.status(201).json({message: "created user sucessfully"});
         } catch(err) {
+            if (err.code === 'P2002') {
+                return res.status(409).json({ message: "E-mail já cadastrado." });
+            }
             return res.status(500).json({ message: "failed to create a user" });
         }
     },
