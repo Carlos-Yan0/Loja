@@ -1,4 +1,8 @@
-POST http://localhost:3001/users
+# Base URL da API: use API_BASE_URL do .env do backend (apps/backend/.env)
+# Extension REST Client lê variáveis do .env (raiz do workspace ou pasta do arquivo)
+@baseUrl = {{$dotenv API_BASE_URL}}
+
+POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
@@ -9,48 +13,48 @@ Content-Type: application/json
 }
 
 ###PUT
-PUT http://localhost:3001/users/389c990c-c732-4323-bf22-79980632ef05
+PUT {{baseUrl}}/users/97907565-6593-4719-8a4e-cd57f3f9505e
 Content-Type: application/json
 
 {
-    "name": "valdeci 2",
-    "email": "valdeci2@gmail.com",
+    "name": "yan",
+    "email": "yan@gmail.com",
     "password": "123456",
     "phone": "",
     "role": "ADMIN"
 }
 
 ###GET
-GET http://localhost:3001/users
+GET {{baseUrl}}/users
 
 ###PRODUCTS
-POST http://localhost:3001/products
+POST {{baseUrl}}/products
 Content-Type: application/json
 
 {
-    "name": "Product 2",
-    "price": 100,
-    "category": "Category 1",
-    "tags": "Tag 1",
+    "name": "Satella",
+    "price": 999,
+    "category": "beauty witch",
+    "tags": "witch",
     "stock": 100,
-    "images": ["image1.jpg", "image2.jpg"]
+    "images": ["https://danuapzlqwrcopxneskr.supabase.co/storage/v1/object/public/fotos/satella.webp"]
 }
 
 ###GET
 
-GET http://localhost:3001/products
+GET {{baseUrl}}/products
 
 ###GET BY ID
-GET http://localhost:3001/products/2e7ce91a-24f1-4ed2-beea-c380a82ece6a
+GET {{baseUrl}}/products/2e7ce91a-24f1-4ed2-beea-c380a82ece6a
 
 ###UPDATE
-PUT http://localhost:3001/products/1
+PUT {{baseUrl}}/products/1
 
 ###DELETE
-DELETE http://localhost:3001/products/e6e447e4-7b24-40da-b7e8-2a37d962b58b
+DELETE {{baseUrl}}/products/e6e447e4-7b24-40da-b7e8-2a37d962b58b
 
 ###ORDERS
-POST http://localhost:3001/orders
+POST {{baseUrl}}/orders
 content-type: application/json
 
 {
@@ -66,11 +70,11 @@ content-type: application/json
 }
 
 ###GET
-GET http://localhost:3001/orders
+GET {{baseUrl}}/orders
 
 ###DELETE
 
-PUT http://localhost:3001/orders/bd7e38f9-e035-44c9-9167-208a86d81ab4
+PUT {{baseUrl}}/orders/bd7e38f9-e035-44c9-9167-208a86d81ab4
 Content-Type: application/json
 
 {
@@ -78,7 +82,7 @@ Content-Type: application/json
 }
 
 ###LOGIN
-POST http://localhost:3001/auth/login
+POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
@@ -88,4 +92,4 @@ Content-Type: application/json
 
 ###Logout
 
-POST http://localhost:3001/auth/logout
+POST {{baseUrl}}/auth/logout
