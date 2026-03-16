@@ -15,7 +15,8 @@
     "prisma": "^7.4.1"
   },
   "scripts": {
-    "dev": "bun --watch src/server.js"
+    "dev": "bun --watch src/server.js",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/bun": "latest"
