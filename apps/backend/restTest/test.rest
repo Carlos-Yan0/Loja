@@ -86,10 +86,13 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "Yan@gmail.com",
+    "email": "yan@testes.com",
     "password": "123456"
 }
 
 ###Logout
 
 POST {{baseUrl}}/auth/logout
+
+###test auth
+POST {{baseUrl}}/auth/me
