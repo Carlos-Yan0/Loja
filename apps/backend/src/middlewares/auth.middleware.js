@@ -15,6 +15,7 @@ export function authMiddleware(req, res, next) {
             }
         }
         req.userId = decoded.sub;
+        req.role = decoded.role
         next()
     })
 }
