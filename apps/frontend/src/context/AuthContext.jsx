@@ -10,7 +10,8 @@ export function AuthProvider({ children }) {
   const checkAuth = useCallback(async () => {
     try {
       await authApi.refresh();
-      setUser({ loggedIn: true });
+      const me = await authApi.me();
+      setUser({ loggedIn: true, role: me.role });
     } catch {
       setUser(null);
     } finally {
@@ -24,7 +25,8 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     await authApi.login(email, password);
-    setUser({ loggedIn: true });
+    const me = await authApi.me();
+    setUser({ loggedIn: true, role: me.role });
   }, []);
 
   const logout = useCallback(async () => {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     isAuthenticated: !!user,
+    isAdmin: user?.role === "ADMIN",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -59,26 +59,30 @@ export const usersApi = {
 };
 
 export const authApi = {
-  me: () => api.get('/auth/me'),
+  me: () => api.post('/auth/me'),
   login: (email, password) => api.post('/auth/login', { email, password }),
   logout: () => api.post('/auth/logout'),
   refresh: () => api.post('/auth/refresh'),
 };
 
 export const productsApi = {
-  list: () => api.get('/products'),
-  get: (id) => api.get(`/products/${id}`),
+  list:   ()        => api.get('/products'),
+  get:    (id)      => api.get(`/products/${id}`),
+  // Admin
+  create: (data)    => api.post('/products', data),
+  update: (id, data)=> api.put(`/products/${id}`, data),
+  remove: (id)      => api.delete(`/products/${id}`),
 };
 
 export const ordersApi = {
-  create: (payload) => api.post('/orders', payload),
-  list: () => api.get('/orders'),
-  update: (id, data) => api.put(`/orders/${id}`, data),
+  create: (payload)    => api.post('/orders', payload),
+  list:   ()           => api.get('/orders'),
+  update: (id, data)   => api.put(`/orders/${id}`, data),
 };
 
 export const addressesApi = {
-  list: () => api.get('/addresses'),
-  create: (data) => api.post('/addresses', data),
+  list:   ()         => api.get('/addresses'),
+  create: (data)     => api.post('/addresses', data),
   update: (id, data) => api.put(`/addresses/${id}`, data),
-  delete: (id) => api.delete(`/addresses/${id}`),
+  delete: (id)       => api.delete(`/addresses/${id}`),
 };

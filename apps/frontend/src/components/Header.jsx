@@ -15,7 +15,7 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, isAdmin } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,9 +69,21 @@ export function Header() {
           </Link>
           <div className={styles.actions}>
             {isAuthenticated ? (
-              <button type="button" onClick={handleLogout} className={styles.linkBtn}>
+              isAdmin ? (
+                <>
+                  <Link to="/admin" className={styles.linkBtn}>
+                  Painel admin
+                </Link>
+
+                  <button type="button" onClick={handleLogout} className={styles.linkBtn}>
+                  Sair
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={handleLogout} className={styles.linkBtn}>
                 Sair
               </button>
+              )
             ) : (
               <Link to="/login" className={styles.linkBtn}>
                 Login &gt;
