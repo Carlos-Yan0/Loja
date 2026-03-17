@@ -75,7 +75,7 @@ export function Product() {
               <input
                 type="number"
                 min={1}
-                max={product.stock ?? 99}
+                max={product.stock}
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value) || 1)}
                 className={styles.qtyInput}
