@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:backend": "bun --cwd apps/backend run server.js",
+    "dev:backend": "bun --cwd apps/backend run src/server.ts",
     "dev:frontend": "bun --cwd apps/frontend run dev",
     "dev": "bun run dev:backend & bun run dev:frontend"
   },

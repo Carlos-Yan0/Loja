@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { useAuth } from './context/useAuth';
 import { Layout } from './components/Layout';
 import { AdminLayout } from './components/AdminLayout';
 import { Login } from './pages/Login';
@@ -9,8 +10,12 @@ import { Product } from './pages/Product';
 import { Cart } from './pages/Cart';
 import { Checkout } from './pages/Checkout';
 import { Register } from './pages/Register';
+import { SearchResults } from './pages/SearchResults';
+import { MyOrders } from './pages/MyOrders';
 import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminOrders } from './pages/admin/AdminOrders';
+import { AdminUsers } from './pages/admin/AdminUsers';
+import { AdminMenu } from './pages/admin/AdminMenu';
 
 function RequireAdmin(){
   const { isAuthenticated, isAdmin, loading  } = useAuth();
@@ -31,6 +36,8 @@ function App() {
               <Route path="produto/:id" element={<Product />} />
               <Route path="carrinho" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
+              <Route path="buscar" element={<SearchResults />} />
+              <Route path="meus-pedidos" element={<MyOrders />} />
               <Route path="login" element={<Login />} />
               <Route path="registro" element={<Register />} />
             </Route>
@@ -41,6 +48,8 @@ function App() {
                 <Route index element={<Navigate to="/admin/produtos" replace />} />
                 <Route path="produtos" element={<AdminProducts />} />
                 <Route path="pedidos" element={<AdminOrders />} />
+                <Route path="usuarios" element={<AdminUsers />} />
+                <Route path="menu" element={<AdminMenu />} />
               </Route>
             </Route>
             

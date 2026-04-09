@@ -4,6 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
+  width: 100%;
 }
 
 .card {
@@ -35,6 +36,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  width: 100%;
 }
 
 .success {
@@ -61,9 +63,11 @@
   gap: var(--space-xs);
   font-weight: 500;
   font-size: 0.9rem;
+  width: 100%;
 }
 
 .input {
+  width: 100%;
   padding: var(--space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -78,6 +82,7 @@
 }
 
 .submit {
+  width: 100%;
   padding: var(--space-md) var(--space-xl);
   background: var(--color-primary);
   color: white;
@@ -105,4 +110,16 @@
   font-size: 0.85rem;
   color: var(--color-text-muted);
   text-align: center;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: var(--space-md);
+    min-height: auto;
+  }
+
+  .card {
+    padding: var(--space-lg);
+    max-width: none;
+  }
 }

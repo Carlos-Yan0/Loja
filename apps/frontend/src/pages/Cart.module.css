@@ -2,6 +2,19 @@
   width: 100%;
 }
 
+.toast {
+  position: fixed;
+  bottom: calc(68px + var(--space-md));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: white;
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  z-index: 600;
+}
+
 .title {
   font-family: var(--font-heading);
   font-size: 1.75rem;
@@ -99,6 +112,12 @@
   margin: 0 0 var(--space-sm);
 }
 
+.stockInfo {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
 .itemActions {
   display: flex;
   align-items: center;
@@ -127,6 +146,11 @@
 
 .quantity button:hover {
   background: var(--color-border);
+}
+
+.quantity button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .quantity span {
@@ -235,5 +259,11 @@
   .itemSubtotal {
     grid-column: 2;
     text-align: right;
+  }
+
+  .toast {
+    width: calc(100% - 2rem);
+    left: 1rem;
+    transform: none;
   }
 }

@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import styles from './ProductCard.module.css';
 
 export function ProductCard({ product }) {
   const { addItem } = useCart();
-  const image = product.images?.[0];
+  const [isHovered, setIsHovered] = useState(false);
+  const imageList = Array.isArray(product.images) ? product.images.filter(Boolean) : [];
+  const primaryImage = imageList[0];
+  const secondaryImage = imageList[1];
+  const canSwapImage = Boolean(secondaryImage);
   const priceFormatted = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -15,12 +20,44 @@ export function ProductCard({ product }) {
     addItem(product, 1);
   };
 
+  const activatePreview = () => {
+    if (!canSwapImage) return;
+    setIsHovered(true);
+  };
+
+  const deactivatePreview = () => {
+    setIsHovered(false);
+  };
+
   return (
-    <article className={styles.card}>
+    <article
+      className={styles.card}
+      onMouseEnter={activatePreview}
+      onMouseLeave={deactivatePreview}
+      onTouchStart={activatePreview}
+      onTouchEnd={deactivatePreview}
+      onTouchCancel={deactivatePreview}
+      onFocus={activatePreview}
+      onBlur={deactivatePreview}
+    >
       <Link to={`/produto/${product.id}`} className={styles.link}>
         <div className={styles.imageWrap}>
-          {image ? (
-            <img src={image} alt={product.name} className={styles.image} />
+          {primaryImage ? (
+            <div className={styles.imageStack}>
+              <img
+                src={primaryImage}
+                alt={product.name}
+                className={`${styles.imagePrimary} ${isHovered && canSwapImage ? styles.imagePrimaryHidden : ''}`}
+              />
+              {canSwapImage ? (
+                <img
+                  src={secondaryImage}
+                  alt=""
+                  aria-hidden="true"
+                  className={`${styles.imageSecondary} ${isHovered ? styles.imageSecondaryVisible : ''}`}
+                />
+              ) : null}
+            </div>
           ) : (
             <div className={styles.placeholder}>Sem imagem</div>
           )}

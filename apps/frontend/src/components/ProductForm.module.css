@@ -1,14 +1,18 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;   /* bottom sheet on mobile */
+  align-items: flex-end;
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.15s ease;
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 .modal {
   background: var(--color-surface);
@@ -16,12 +20,7 @@
   width: 100%;
   max-height: 92vh;
   overflow-y: auto;
-  box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
-  animation: slideUp 0.25s ease;
-}
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
 }
 
 .header {
@@ -54,29 +53,16 @@
   border-radius: var(--radius-sm);
   font-size: 1rem;
   color: var(--color-text-muted);
-  flex-shrink: 0;
 }
-.closeBtn:hover { background: var(--color-border); color: var(--color-text); }
 
 .form {
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  /* safe area for phones with home indicator */
   padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
 }
 
-.error {
-  color: var(--color-price);
-  font-size: 0.875rem;
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(196,30,58,0.08);
-  border-radius: var(--radius-sm);
-  margin: 0;
-}
-
-/* Single column on mobile */
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -97,26 +83,121 @@
   color: var(--color-text-muted);
 }
 
-.input,
-.textarea {
+.input {
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg);
   color: var(--color-text);
-  font-size: 1rem;   /* 1rem prevents iOS zoom on focus */
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.input:focus, .textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(139,69,18,0.15);
+  font-size: 1rem;
 }
 
-.textarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(139, 69, 18, 0.15);
+}
+
+.helperText {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.fieldError,
+.error {
+  color: var(--color-price);
+  font-size: 0.8rem;
+}
+
+.mediaSection {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  background: var(--color-bg-card);
+}
+
+.mediaHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.mediaTitle {
+  margin: 0 0 var(--space-xs);
+  font-size: 1rem;
+}
+
+.mediaHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.uploadBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px dashed rgba(139, 69, 18, 0.35);
+  color: var(--color-primary);
+  font-weight: 600;
+  background: rgba(139, 69, 18, 0.06);
+}
+
+.fileInput {
+  display: none;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.imageCard {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.imagePreview {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.imageCaption {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  word-break: break-word;
+}
+
+.removeImageBtn {
+  border: 1px solid rgba(196, 30, 58, 0.18);
+  color: var(--color-price);
+  background: rgba(196, 30, 58, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.emptyMedia {
+  grid-column: 1 / -1;
+  padding: var(--space-lg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--color-text-muted);
 }
 
 .actions {
@@ -132,44 +213,54 @@
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 1rem;
-  transition: background 0.15s;
 }
 
 .cancelBtn {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
-  order: 2; /* Cancel below Submit on mobile */
 }
-.cancelBtn:hover:not(:disabled) { background: var(--color-bg); }
-.cancelBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .submitBtn {
   border: none;
   background: var(--color-primary);
   color: white;
-  order: 1;
 }
-.submitBtn:hover:not(:disabled) { background: var(--color-primary-dark); }
-.submitBtn:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* ─── Tablet / Desktop ─── */
+.submitBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 @media (min-width: 600px) {
-  .overlay { align-items: center; padding: var(--space-md); }
+  .overlay {
+    align-items: center;
+    padding: var(--space-md);
+  }
 
   .modal {
     border-radius: var(--radius-lg);
-    max-width: 560px;
-    animation: fadeScale 0.2s ease;
-  }
-  @keyframes fadeScale {
-    from { transform: scale(0.95); opacity: 0; }
-    to   { transform: scale(1);    opacity: 1; }
+    max-width: 720px;
   }
 
-  .form { padding: var(--space-xl); }
+  .form {
+    padding: var(--space-xl);
+  }
 
-  .grid { grid-template-columns: 1fr 1fr; }
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .mediaHeader {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .imageGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
   .actions {
     flex-direction: row;
@@ -179,7 +270,6 @@
   .cancelBtn,
   .submitBtn {
     width: auto;
-    order: unset;
     padding: var(--space-sm) var(--space-xl);
   }
 }

@@ -1,0 +1,155 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.printBtn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.receipt {
+  background: white;
+  color: #111;
+  border: 1px dashed rgba(17, 17, 17, 0.35);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  font-family: 'Courier New', monospace;
+  width: 100%;
+  overflow: hidden;
+}
+
+.header,
+.block,
+.items,
+.footer {
+  border-bottom: 1px dashed rgba(17, 17, 17, 0.25);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.footer {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.brand {
+  margin: 0 0 0.2rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-family: 'Courier New', monospace;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: var(--space-sm);
+  color: rgba(17, 17, 17, 0.8);
+  font-size: 0.9rem;
+}
+
+.blockTitle {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.blockValue {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.itemsHeader,
+.itemRow,
+.totalRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-sm);
+  align-items: baseline;
+}
+
+.itemsHeader {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  opacity: 0.72;
+  margin-bottom: var(--space-sm);
+}
+
+.itemRow {
+  font-size: 0.95rem;
+  padding: 0.25rem 0;
+}
+
+.itemRow span:first-child,
+.itemsHeader span:first-child,
+.blockValue,
+.meta span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.grandTotal {
+  font-size: 1.05rem;
+  margin-top: var(--space-sm);
+}
+
+@media print {
+  .actions {
+    display: none;
+  }
+
+  .receipt {
+    border: none;
+    padding: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .actions {
+    justify-content: stretch;
+  }
+
+  .printBtn {
+    width: 100%;
+  }
+
+  .receipt {
+    padding: var(--space-md);
+  }
+
+  .itemsHeader,
+  .itemRow,
+  .totalRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .itemsHeader span:nth-child(2),
+  .itemRow span:nth-child(2) {
+    text-align: right;
+  }
+
+  .itemsHeader span:nth-child(3),
+  .itemRow span:nth-child(3) {
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+}

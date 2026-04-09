@@ -156,6 +156,12 @@
   margin-top: 2px;
 }
 
+.imageCount {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
 .cardPrice {
   font-weight: 700;
   font-size: 0.9rem;

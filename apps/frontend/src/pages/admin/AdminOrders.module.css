@@ -159,7 +159,7 @@
 
 .cardRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-sm);
 }
@@ -170,19 +170,24 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
-  white-space: nowrap;
+  white-space: normal;
 }
 
-.cardValue { font-size: 0.875rem; }
+.cardValue {
+  font-size: 0.875rem;
+  text-align: right;
+  min-width: 0;
+}
 
 .totalValue { font-weight: 700; color: var(--color-price); font-size: 0.9rem; }
 
 /* ── Status group ── */
 .statusGroup {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .statusSelect {
@@ -194,6 +199,7 @@
   font-size: 0.78rem;
   font-family: inherit;
   cursor: pointer;
+  max-width: 100%;
 }
 .statusSelect:focus { outline: none; border-color: var(--color-primary); }
 .statusSelect:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -298,7 +304,13 @@
 
   .payMethod { font-size: 0.85rem; color: var(--color-text-muted); }
 
-  .statusCell { display: flex; flex-direction: column; gap: var(--space-xs); align-items: flex-start; }
+  .statusCell {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-sm);
+    align-items: center;
+    white-space: nowrap;
+  }
 
   .expandBtnTable {
     padding: 4px 10px;

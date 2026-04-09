@@ -1,39 +1,45 @@
-import { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import styles from './AdminLayout.module.css';
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/useAuth'
+import styles from './AdminLayout.module.css'
 
 const NAV_ITEMS = [
-  { to: '/admin/produtos', icon: '📦', label: 'Produtos' },
-  { to: '/admin/pedidos',  icon: '📋', label: 'Pedidos'  },
-];
+  { to: '/admin/produtos', icon: 'P', label: 'Produtos' },
+  { to: '/admin/pedidos', icon: 'O', label: 'Pedidos' },
+  { to: '/admin/usuarios', icon: 'U', label: 'Usuarios' },
+  { to: '/admin/menu', icon: 'M', label: 'Menu' },
+]
 
 export function AdminLayout() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
+    await logout()
+    navigate('/')
+  }
 
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') setDrawerOpen(false); };
-    if (drawerOpen) {
-      document.addEventListener('keydown', handleKey);
-      document.body.style.overflow = 'hidden';
+    const handleKey = (event) => {
+      if (event.key === 'Escape') {
+        setDrawerOpen(false)
+      }
     }
+
+    if (drawerOpen) {
+      document.addEventListener('keydown', handleKey)
+      document.body.style.overflow = 'hidden'
+    }
+
     return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
-    };
-  }, [drawerOpen]);
+      document.removeEventListener('keydown', handleKey)
+      document.body.style.overflow = ''
+    }
+  }, [drawerOpen])
 
   return (
     <div className={styles.layout}>
-
-      {/* ── Mobile top bar (hidden on desktop) ── */}
       <header className={styles.topBar}>
         <div className={styles.topBarBrand}>
           <span className={styles.brandMain}>GF</span>
@@ -45,22 +51,27 @@ export function AdminLayout() {
           onClick={() => setDrawerOpen(true)}
           aria-label="Abrir menu"
         >
-          ☰
+          =
         </button>
       </header>
 
-      {/* ── Mobile drawer overlay ── */}
       <div
         className={`${styles.drawerOverlay} ${drawerOpen ? styles.drawerOverlayOpen : ''}`}
         onClick={() => setDrawerOpen(false)}
         aria-hidden="true"
       />
 
-      {/* ── Mobile drawer ── */}
       <div className={`${styles.drawer} ${drawerOpen ? styles.drawerOpen : ''}`} role="dialog" aria-modal="true">
         <div className={styles.drawerHeader}>
           <span className={styles.drawerTitle}>Menu Admin</span>
-          <button type="button" className={styles.drawerClose} onClick={() => setDrawerOpen(false)} aria-label="Fechar">✕</button>
+          <button
+            type="button"
+            className={styles.drawerClose}
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Fechar"
+          >
+            X
+          </button>
         </div>
         <nav className={styles.drawerNav}>
           {NAV_ITEMS.map(({ to, icon, label }) => (
@@ -76,12 +87,15 @@ export function AdminLayout() {
           ))}
         </nav>
         <div className={styles.drawerFooter}>
-          <a href="/" className={styles.drawerStoreLink}>← Voltar à loja</a>
-          <button type="button" onClick={handleLogout} className={styles.drawerLogout}>Sair</button>
+          <a href="/" className={styles.drawerStoreLink}>
+            Voltar para a loja
+          </a>
+          <button type="button" onClick={handleLogout} className={styles.drawerLogout}>
+            Sair
+          </button>
         </div>
       </div>
 
-      {/* ── Desktop sidebar (hidden on mobile) ── */}
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
           <span className={styles.brandMain}>GF</span>
@@ -101,20 +115,20 @@ export function AdminLayout() {
         </nav>
         <div className={styles.sidebarFooter}>
           <a href="/" className={styles.storeLink}>
-            <span>←</span>
+            <span>&lt;</span>
             <span>Ir para a loja</span>
           </a>
-          <button type="button" onClick={handleLogout} className={styles.logoutBtn}>Sair</button>
+          <button type="button" onClick={handleLogout} className={styles.logoutBtn}>
+            Sair
+          </button>
         </div>
       </aside>
 
-      {/* ── Page content ── */}
       <div className={styles.content}>
         <Outlet />
       </div>
 
-      {/* ── Mobile bottom nav (hidden on desktop) ── */}
-      <nav className={styles.bottomNav} aria-label="Navegação admin">
+      <nav className={styles.bottomNav} aria-label="Navegacao admin">
         {NAV_ITEMS.map(({ to, icon, label }) => (
           <NavLink
             key={to}
@@ -126,11 +140,10 @@ export function AdminLayout() {
           </NavLink>
         ))}
         <button type="button" className={styles.bottomNavLink} onClick={handleLogout}>
-          <span className={styles.bottomNavIcon}>🚪</span>
+          <span className={styles.bottomNavIcon}>X</span>
           <span className={styles.bottomNavLabel}>Sair</span>
         </button>
       </nav>
-
     </div>
-  );
+  )
 }

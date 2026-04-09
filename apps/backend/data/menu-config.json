@@ -1,0 +1,43 @@
+{
+  "categories": [],
+  "tags": [
+    "lancamento"
+  ],
+  "homeBanner": {
+    "enabled": true,
+    "imageUrl": "https://nfdztgufbpcrdtddhphs.supabase.co/storage/v1/object/public/banners/home/6f55cec7-673b-46ee-9a7a-cf4ee5b6ae31.webp",
+    "ctaLabel": "camisas de times",
+    "targetType": "CATEGORY",
+    "targetValue": "camisa de time"
+  },
+  "homeSections": [
+    {
+      "id": "home-section-1",
+      "type": "TAG",
+      "value": "lancamento",
+      "title": "lancamento",
+      "enabled": true
+    },
+    {
+      "id": "home-section-2",
+      "type": "CATEGORY",
+      "value": "bruxa",
+      "title": "bruxa",
+      "enabled": true
+    },
+    {
+      "id": "home-section-3",
+      "type": "CATEGORY",
+      "value": "camisa de time",
+      "title": "camisa de time",
+      "enabled": true
+    },
+    {
+      "id": "home-section-4",
+      "type": "TAG",
+      "value": "bruxa",
+      "title": "bruxa",
+      "enabled": true
+    }
+  ]
+}

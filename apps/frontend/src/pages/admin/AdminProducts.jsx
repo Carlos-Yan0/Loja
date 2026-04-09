@@ -1,85 +1,111 @@
-import { useState, useEffect, useCallback } from 'react';
-import { productsApi } from '../../services/api';
-import { ProductForm } from '../../components/ProductForm';
-import { ConfirmModal } from '../../components/ConfirmModal';
-import styles from './AdminProducts.module.css';
-
-const formatPrice = (n) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+import { useCallback, useEffect, useState } from 'react'
+import { ProductForm } from '../../components/ProductForm'
+import { ConfirmModal } from '../../components/ConfirmModal'
+import { productsApi } from '../../services/api'
+import { formatPrice } from '../../utils/format'
+import styles from './AdminProducts.module.css'
 
 export function AdminProducts() {
-  const [products, setProducts]         = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState('');
-  const [toast, setToast]               = useState('');
-  const [formOpen, setFormOpen]         = useState(false);
-  const [editing, setEditing]           = useState(null);
-  const [formLoading, setFormLoading]   = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [toast, setToast] = useState('')
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [formLoading, setFormLoading] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
+  const showToast = (message) => {
+    setToast(message)
+    setTimeout(() => setToast(''), 3000)
+  }
 
   const load = useCallback(() => {
-    setLoading(true);
+    setLoading(true)
+    setError('')
+
     productsApi
       .list()
       .then(setProducts)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch((requestError) => setError(requestError.message))
+      .finally(() => setLoading(false))
+  }, [])
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load()
+  }, [load])
 
-  const openCreate = () => { setEditing(null); setFormOpen(true); };
-  const openEdit   = (p)  => { setEditing(p);   setFormOpen(true); };
-  const openDelete = (p)  => setDeleteTarget(p);
+  const openCreate = () => {
+    setEditing(null)
+    setFormOpen(true)
+  }
 
-  const handleSave = async (data) => {
-    setFormLoading(true);
+  const openEdit = (product) => {
+    setEditing(product)
+    setFormOpen(true)
+  }
+
+  const handleSave = async ({ newFiles, ...payload }) => {
+    setFormLoading(true)
+
     try {
-      if (editing) {
-        await productsApi.update(editing.id, data);
-        showToast('Produto atualizado!');
-      } else {
-        await productsApi.create(data);
-        showToast('Produto criado!');
+      let product = editing
+        ? await productsApi.update(editing.id, payload)
+        : await productsApi.create(payload)
+
+      const uploadErrors = []
+      for (const file of newFiles) {
+        try {
+          const uploadResult = await productsApi.uploadImage(product.id, file)
+          product = uploadResult.product
+        } catch (uploadError) {
+          uploadErrors.push(uploadError instanceof Error ? uploadError.message : 'Falha ao enviar imagem.')
+        }
       }
-      setFormOpen(false);
-      load();
-    } catch (err) {
-      alert(err.message || 'Erro ao salvar produto.');
+
+      if (uploadErrors.length > 0) {
+        showToast(
+          `${editing ? 'Produto atualizado' : 'Produto criado'} sem ${uploadErrors.length} imagem(ns). Edite o produto e tente novamente.`
+        )
+      } else {
+        showToast(editing ? 'Produto atualizado com sucesso.' : 'Produto criado com sucesso.')
+      }
+
+      setFormOpen(false)
+      setEditing(null)
+      load()
+    } catch (requestError) {
+      window.alert(requestError.message || 'Erro ao salvar produto.')
     } finally {
-      setFormLoading(false);
+      setFormLoading(false)
     }
-  };
+  }
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleteLoading(true);
+    if (!deleteTarget) return
+
+    setDeleteLoading(true)
     try {
-      await productsApi.remove(deleteTarget.id);
-      showToast('Produto excluído.');
-      setDeleteTarget(null);
-      load();
-    } catch (err) {
-      alert(err.message || 'Erro ao excluir produto.');
+      await productsApi.remove(deleteTarget.id)
+      showToast('Produto excluído com sucesso.')
+      setDeleteTarget(null)
+      load()
+    } catch (requestError) {
+      window.alert(requestError.message || 'Erro ao excluir produto.')
     } finally {
-      setDeleteLoading(false);
+      setDeleteLoading(false)
     }
-  };
+  }
 
   return (
     <div className={styles.page}>
-      {/* Header */}
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.pageTitle}>Produtos</h1>
           <p className={styles.pageSubtitle}>
-            {products.length} produto{products.length !== 1 ? 's' : ''} cadastrado{products.length !== 1 ? 's' : ''}
+            {products.length} produto{products.length !== 1 ? 's' : ''} cadastrado
+            {products.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button type="button" className={styles.addBtn} onClick={openCreate}>
@@ -89,12 +115,18 @@ export function AdminProducts() {
 
       {toast && <div className={styles.toast}>{toast}</div>}
 
-      {loading && <div className={styles.state}><p>Carregando produtos...</p></div>}
+      {loading && (
+        <div className={styles.state}>
+          <p>Carregando produtos...</p>
+        </div>
+      )}
 
       {!loading && error && (
         <div className={`${styles.state} ${styles.stateError}`}>
           <p>{error}</p>
-          <button type="button" onClick={load} className={styles.retryBtn}>Tentar novamente</button>
+          <button type="button" onClick={load} className={styles.retryBtn}>
+            Tentar novamente
+          </button>
         </div>
       )}
 
@@ -107,37 +139,41 @@ export function AdminProducts() {
         </div>
       )}
 
-      {/* ── Mobile: card list ── */}
       {!loading && !error && products.length > 0 && (
         <>
           <ul className={styles.cardList}>
-            {products.map((p) => (
-              <li key={p.id} className={styles.card}>
+            {products.map((product) => (
+              <li key={product.id} className={styles.card}>
                 <div className={styles.cardImg}>
-                  {p.images?.[0]
-                    ? <img src={p.images[0]} alt={p.name} />
-                    : <span>—</span>
-                  }
+                  {product.images?.[0] ? <img src={product.images[0]} alt={product.name} /> : <span>—</span>}
                 </div>
                 <div className={styles.cardBody}>
-                  <p className={styles.cardName}>{p.name}</p>
-                  <p className={styles.cardCategory}>{p.category}</p>
+                  <p className={styles.cardName}>{product.name}</p>
+                  <p className={styles.cardCategory}>{product.category}</p>
                   <div className={styles.cardMeta}>
-                    <span className={styles.cardPrice}>{formatPrice(p.price)}</span>
-                    <span className={`${styles.cardStock} ${p.stock === 0 ? styles.stockOut : p.stock <= 5 ? styles.stockLow : ''}`}>
-                      Estoque: {p.stock}
+                    <span className={styles.cardPrice}>{formatPrice(product.price)}</span>
+                    <span
+                      className={`${styles.cardStock} ${
+                        product.stock === 0 ? styles.stockOut : product.stock <= 5 ? styles.stockLow : ''
+                      }`}
+                    >
+                      Estoque: {product.stock}
                     </span>
                   </div>
+                  <p className={styles.imageCount}>{product.images.length} imagem(ns)</p>
                 </div>
                 <div className={styles.cardActions}>
-                  <button type="button" className={styles.editBtn} onClick={() => openEdit(p)}>Editar</button>
-                  <button type="button" className={styles.deleteBtn} onClick={() => openDelete(p)}>Excluir</button>
+                  <button type="button" className={styles.editBtn} onClick={() => openEdit(product)}>
+                    Editar
+                  </button>
+                  <button type="button" className={styles.deleteBtn} onClick={() => setDeleteTarget(product)}>
+                    Excluir
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
 
-          {/* ── Desktop: table ── */}
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -147,29 +183,47 @@ export function AdminProducts() {
                   <th className={styles.th}>Categoria</th>
                   <th className={styles.th}>Preço</th>
                   <th className={styles.th}>Estoque</th>
+                  <th className={styles.th}>Imagens</th>
                   <th className={styles.th}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
-                  <tr key={p.id} className={styles.tr}>
+                {products.map((product) => (
+                  <tr key={product.id} className={styles.tr}>
                     <td className={styles.td}>
                       <div className={styles.imgThumb}>
-                        {p.images?.[0] ? <img src={p.images[0]} alt={p.name} /> : <span>—</span>}
+                        {product.images?.[0] ? <img src={product.images[0]} alt={product.name} /> : <span>—</span>}
                       </div>
                     </td>
-                    <td className={styles.td}><span className={styles.productName}>{p.name}</span></td>
-                    <td className={styles.td}><span className={styles.category}>{p.category}</span></td>
-                    <td className={styles.td}><span className={styles.price}>{formatPrice(p.price)}</span></td>
                     <td className={styles.td}>
-                      <span className={`${styles.stock} ${p.stock === 0 ? styles.stockOut : p.stock <= 5 ? styles.stockLow : ''}`}>
-                        {p.stock}
+                      <span className={styles.productName}>{product.name}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.category}>{product.category}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.price}>{formatPrice(product.price)}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <span
+                        className={`${styles.stock} ${
+                          product.stock === 0 ? styles.stockOut : product.stock <= 5 ? styles.stockLow : ''
+                        }`}
+                      >
+                        {product.stock}
                       </span>
                     </td>
                     <td className={styles.td}>
+                      <span className={styles.imageCount}>{product.images.length}</span>
+                    </td>
+                    <td className={styles.td}>
                       <div className={styles.rowActions}>
-                        <button type="button" className={styles.editBtn} onClick={() => openEdit(p)}>Editar</button>
-                        <button type="button" className={styles.deleteBtn} onClick={() => openDelete(p)}>Excluir</button>
+                        <button type="button" className={styles.editBtn} onClick={() => openEdit(product)}>
+                          Editar
+                        </button>
+                        <button type="button" className={styles.deleteBtn} onClick={() => setDeleteTarget(product)}>
+                          Excluir
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -188,7 +242,7 @@ export function AdminProducts() {
         loading={formLoading}
       />
       <ConfirmModal
-        isOpen={!!deleteTarget}
+        isOpen={Boolean(deleteTarget)}
         title="Excluir produto"
         message={`Tem certeza que deseja excluir "${deleteTarget?.name}"? Esta ação não pode ser desfeita.`}
         onConfirm={handleDelete}
@@ -196,5 +250,5 @@ export function AdminProducts() {
         loading={deleteLoading}
       />
     </div>
-  );
+  )
 }

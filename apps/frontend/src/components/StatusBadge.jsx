@@ -1,6 +1,7 @@
 import styles from './StatusBadge.module.css';
 
 const STATUS_CONFIG = {
+  AWAITING_PAYMENT: { label: 'Esperando pagamento', mod: 'awaiting' },
   PROCESSING: { label: 'Processando', mod: 'processing' },
   COMPLETED:  { label: 'Concluído',   mod: 'completed' },
   CANCELED:   { label: 'Cancelado',   mod: 'canceled' },

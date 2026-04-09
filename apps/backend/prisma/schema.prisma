@@ -21,6 +21,7 @@ enum Role {
 
 
 enum OrderStatus {
+  AWAITING_PAYMENT
   COMPLETED
   PROCESSING
   CANCELED
@@ -32,6 +33,20 @@ enum PaymentMethod {
   PIX
   CREDIT_CARD
   BOLETO
+}
+
+enum PaymentProvider {
+  MERCADO_PAGO
+  MOCK
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+  EXPIRED
+  REFUNDED
 }
 
 //MODELS
@@ -75,7 +90,7 @@ model Address {
 
 model Order {
   id String @id @default(uuid())
-  status OrderStatus @default(PROCESSING)
+  status OrderStatus @default(AWAITING_PAYMENT)
   total Float
   shipping Float @default(0)
   PayMethod PaymentMethod
@@ -86,6 +101,7 @@ model Order {
   user User @relation(fields: [userId], references: [id])
 
   items OrderItem[]
+  paymentTransactions PaymentTransaction[]
 }
 
 model OrderItem {
@@ -98,4 +114,43 @@ model OrderItem {
 
   productId String
   product Product @relation(fields: [productId], references: [id])
+}
+
+model PaymentTransaction {
+  id String @id @default(uuid())
+  provider PaymentProvider
+  status PaymentStatus @default(PENDING)
+  amount Float
+  currency String @default("BRL")
+  externalId String?
+  externalReference String
+  checkoutUrl String?
+  idempotencyKey String @unique
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+
+  webhookEvents PaymentWebhookEvent[]
+
+  @@unique([provider, externalId])
+  @@index([orderId])
+}
+
+model PaymentWebhookEvent {
+  id String @id @default(uuid())
+  provider PaymentProvider
+  eventType String
+  eventId String
+  signatureValid Boolean @default(false)
+  payload Json
+  createdAt DateTime @default(now())
+
+  transactionId String?
+  transaction PaymentTransaction? @relation(fields: [transactionId], references: [id])
+
+  @@unique([provider, eventId])
+  @@index([transactionId])
 }

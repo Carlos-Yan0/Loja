@@ -1,35 +1,50 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { usersApi } from '../services/api';
-import styles from './Register.module.css';
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { usersApi } from '../services/api'
+import { formatPhone } from '../utils/format'
+import { validateRegisterForm } from '../utils/validation'
+import styles from './Register.module.css'
 
 export function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+  })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      await usersApi.create({
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        ...(phone.trim() && { phone: phone.trim() }),
-      });
-      navigate('/login', { state: { message: 'Conta criada! Faça login para continuar.' } });
-    } catch (err) {
-      setError(err.message || 'Não foi possível criar a conta. Tente novamente.');
-    } finally {
-      setLoading(false);
+  const handleChange = (event) => {
+    const { name, value } = event.target
+    setForm((current) => ({
+      ...current,
+      [name]: name === 'phone' ? formatPhone(value) : value,
+    }))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const validation = validateRegisterForm(form)
+    if (!validation.isValid) {
+      setError(Object.values(validation.errors)[0])
+      return
     }
-  };
+
+    setError('')
+    setLoading(true)
+
+    try {
+      await usersApi.create(validation.payload)
+      navigate('/login', { state: { message: 'Conta criada! Faça login para continuar.' } })
+    } catch (requestError) {
+      setError(requestError.message || 'Não foi possível criar a conta. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -42,8 +57,9 @@ export function Register() {
             Nome completo
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={form.name}
+              onChange={handleChange}
               required
               autoComplete="name"
               className={styles.input}
@@ -54,8 +70,9 @@ export function Register() {
             E-mail
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={form.email}
+              onChange={handleChange}
               required
               autoComplete="email"
               className={styles.input}
@@ -66,21 +83,23 @@ export function Register() {
             Senha
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               className={styles.input}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
             />
           </label>
           <label className={styles.label}>
             Telefone <span className={styles.optional}>(opcional)</span>
             <input
               type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
               autoComplete="tel"
               className={styles.input}
               placeholder="(00) 00000-0000"
@@ -95,5 +114,5 @@ export function Register() {
         </p>
       </div>
     </div>
-  );
+  )
 }

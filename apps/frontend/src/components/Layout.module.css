@@ -2,6 +2,8 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .main {
@@ -10,6 +12,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-lg) var(--space-md);
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

@@ -1,12 +1,19 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/useCart';
 import styles from './Cart.module.css';
 
 const formatPrice = (n) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
 
 export function Cart() {
-  const { items, totalPrice, updateQuantity, removeItem } = useCart();
+  const { items, totalPrice, updateQuantity, removeItem, notice, clearNotice } = useCart();
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timer = setTimeout(() => clearNotice(), 2500);
+    return () => clearTimeout(timer);
+  }, [notice, clearNotice]);
 
   if (items.length === 0) {
     return (
@@ -24,6 +31,7 @@ export function Cart() {
 
   return (
     <div className={styles.page}>
+      {notice && <div className={styles.toast}>{notice}</div>}
       <h1 className={styles.title}>Carrinho</h1>
       <div className={styles.content}>
         <ul className={styles.list}>
@@ -39,6 +47,7 @@ export function Cart() {
               <div className={styles.itemInfo}>
                 <h3 className={styles.itemName}>{item.name}</h3>
                 <p className={styles.itemPrice}>{formatPrice(item.price)}</p>
+                <p className={styles.stockInfo}>Disponível: {item.stock}</p>
                 <div className={styles.itemActions}>
                   <div className={styles.quantity}>
                     <button
@@ -53,6 +62,7 @@ export function Cart() {
                       type="button"
                       onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                       aria-label="Aumentar quantidade"
+                      disabled={item.quantity >= item.stock}
                     >
                       +
                     </button>
