@@ -26,6 +26,8 @@ const fixedItems: MenuItem[] = [
 const homeBannerDefault: MenuHomeBannerConfig = {
   enabled: false,
   imageUrl: '',
+  ctaEnabled: true,
+  ctaTransparent: false,
   ctaLabel: 'Explorar agora',
   targetType: 'BESTSELLERS',
   targetValue: '',
@@ -222,6 +224,8 @@ export class MenuService {
     return {
       enabled,
       imageUrl,
+      ctaEnabled: banner?.ctaEnabled !== false,
+      ctaTransparent: banner?.ctaTransparent === true,
       ctaLabel,
       targetType,
       targetValue,

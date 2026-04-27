@@ -29,6 +29,8 @@ const ensureFourSections = (sections = []) =>
 const emptyBanner = {
   enabled: false,
   imageUrl: '',
+  ctaEnabled: true,
+  ctaTransparent: false,
   ctaLabel: 'Explorar agora',
   targetType: 'BESTSELLERS',
   targetValue: '',
@@ -293,6 +295,34 @@ export function AdminMenu() {
               />
               <span>Ativar banner na home</span>
             </label>
+
+            <div className={styles.bannerOptionsRow}>
+              <label className={styles.optionInline}>
+                <input
+                  type="checkbox"
+                  checked={homeBanner.ctaEnabled}
+                  onChange={(event) =>
+                    setHomeBanner((current) => ({ ...current, ctaEnabled: event.target.checked }))
+                  }
+                />
+                <span>Mostrar botao</span>
+              </label>
+
+              <label className={styles.optionInline}>
+                <input
+                  type="checkbox"
+                  checked={homeBanner.ctaTransparent}
+                  disabled={!homeBanner.ctaEnabled}
+                  onChange={(event) =>
+                    setHomeBanner((current) => ({
+                      ...current,
+                      ctaTransparent: event.target.checked,
+                    }))
+                  }
+                />
+                <span>Botao transparente</span>
+              </label>
+            </div>
 
             <div className={styles.formGrid}>
               <label className={styles.field}>

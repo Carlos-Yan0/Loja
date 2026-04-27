@@ -38,6 +38,8 @@ const toBannerLink = (banner) => {
 const defaultHomeBanner = {
   enabled: false,
   imageUrl: '',
+  ctaEnabled: true,
+  ctaTransparent: false,
   ctaLabel: 'Ver colecao',
   targetType: 'BESTSELLERS',
   targetValue: '',
@@ -188,9 +190,16 @@ export function Home() {
           <img src={state.homeBanner.imageUrl} alt="" className={styles.promoImage} loading="lazy" />
           <div className={styles.promoOverlay} />
           <div className={styles.promoContent}>
-            <Link to={bannerLink} className={styles.promoBtn}>
-              Ver colecao
-            </Link>
+            {state.homeBanner.ctaEnabled && (
+              <Link
+                to={bannerLink}
+                className={`${styles.promoBtn} ${
+                  state.homeBanner.ctaTransparent ? styles.promoBtnTransparent : ''
+                }`}
+              >
+                {state.homeBanner.ctaLabel || 'Ver colecao'}
+              </Link>
+            )}
           </div>
         </section>
       )}

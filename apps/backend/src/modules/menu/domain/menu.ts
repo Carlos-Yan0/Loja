@@ -29,6 +29,8 @@ export interface MenuProductOption {
 export interface MenuHomeBannerConfig {
   enabled: boolean
   imageUrl: string
+  ctaEnabled: boolean
+  ctaTransparent: boolean
   ctaLabel: string
   targetType: MenuBannerTargetType
   targetValue: string

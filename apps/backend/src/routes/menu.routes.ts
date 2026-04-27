@@ -35,6 +35,8 @@ export const createMenuRoutes = (menuController: MenuController) =>
             t.Object({
               enabled: t.Boolean(),
               imageUrl: t.String(),
+              ctaEnabled: t.Optional(t.Boolean()),
+              ctaTransparent: t.Optional(t.Boolean()),
               ctaLabel: t.String(),
               targetType: t.UnionEnum(['BESTSELLERS', 'CATEGORY', 'TAG', 'PRODUCT']),
               targetValue: t.String(),

@@ -20,7 +20,7 @@ function ProductDetails({ productId }) {
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [quantity, setQuantity] = useState(1)
+  const [quantityInput, setQuantityInput] = useState('1')
   const [added, setAdded] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
 
@@ -32,6 +32,7 @@ function ProductDetails({ productId }) {
       .then((response) => {
         if (cancelled) return
         setProduct(response)
+        setQuantityInput('1')
         setActiveImageIndex(0)
         setError(null)
       })
@@ -53,11 +54,24 @@ function ProductDetails({ productId }) {
 
   const images = useMemo(() => (Array.isArray(product?.images) ? product.images : []), [product])
   const activeImage = images[activeImageIndex] ?? null
+  const maxQuantity = Math.max(1, Number(product?.stock) || 1)
+
+  const resolveQuantity = (value) => {
+    const trimmed = String(value ?? '').trim()
+    if (!trimmed) return 1
+
+    const parsed = Number(trimmed)
+    if (!Number.isFinite(parsed)) return 1
+
+    return Math.max(1, Math.min(Math.trunc(parsed), maxQuantity))
+  }
 
   const handleAddToCart = () => {
     if (!product) return
 
-    addItem(product, quantity)
+    const nextQuantity = resolveQuantity(quantityInput)
+    setQuantityInput(String(nextQuantity))
+    addItem(product, nextQuantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -165,11 +179,12 @@ function ProductDetails({ productId }) {
                 type="number"
                 min={1}
                 max={product.stock}
-                value={quantity}
+                value={quantityInput}
                 onChange={(event) => {
-                  const nextQuantity = Number(event.target.value) || 1
-                  setQuantity(Math.max(1, Math.min(nextQuantity, product.stock || 1)))
+                  setQuantityInput(event.target.value)
                 }}
+                onBlur={() => setQuantityInput(String(resolveQuantity(quantityInput)))}
+                onFocus={(event) => event.target.select()}
                 className={styles.qtyInput}
               />
             </label>

@@ -180,6 +180,8 @@ const normalizeMenuProductOption = (raw) => ({
 const normalizeMenuHomeBanner = (raw) => ({
   enabled: raw?.enabled === true,
   imageUrl: raw?.imageUrl ?? '',
+  ctaEnabled: raw?.ctaEnabled !== false,
+  ctaTransparent: raw?.ctaTransparent === true,
   ctaLabel: raw?.ctaLabel ?? 'Explorar agora',
   targetType: raw?.targetType ?? 'BESTSELLERS',
   targetValue: raw?.targetValue ?? '',

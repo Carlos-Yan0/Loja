@@ -117,6 +117,13 @@
   margin-bottom: var(--space-md);
 }
 
+.bannerOptionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
 .wideCard {
   grid-column: 1 / -1;
 }

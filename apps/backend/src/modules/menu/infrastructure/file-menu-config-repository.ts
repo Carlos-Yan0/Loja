@@ -9,6 +9,8 @@ const defaultConfig: MenuConfig = {
   homeBanner: {
     enabled: false,
     imageUrl: '',
+    ctaEnabled: true,
+    ctaTransparent: false,
     ctaLabel: 'Explorar agora',
     targetType: 'BESTSELLERS',
     targetValue: '',
@@ -29,6 +31,8 @@ const toHomeBanner = (value: unknown): MenuHomeBannerConfig => {
   return {
     enabled: parsed.enabled === true,
     imageUrl: typeof parsed.imageUrl === 'string' ? parsed.imageUrl : defaultConfig.homeBanner.imageUrl,
+    ctaEnabled: parsed.ctaEnabled !== false,
+    ctaTransparent: parsed.ctaTransparent === true,
     ctaLabel: typeof parsed.ctaLabel === 'string' ? parsed.ctaLabel : defaultConfig.homeBanner.ctaLabel,
     targetType:
       typeof parsed.targetType === 'string' && allowedTypes.has(parsed.targetType)
