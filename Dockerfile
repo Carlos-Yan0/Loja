@@ -10,7 +10,7 @@ RUN bun install --ignore-scripts
 
 COPY . .
 
-RUN bunx --cwd apps/backend prisma generate
+RUN ./node_modules/.bin/prisma generate --schema apps/backend/prisma/schema.prisma
 
 WORKDIR /app/apps/backend
 
@@ -18,4 +18,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "bunx prisma migrate deploy --schema prisma/schema.prisma && bun run src/server.ts"]
+CMD ["sh", "-c", "../../node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma && bun run src/server.ts"]
