@@ -9,6 +9,7 @@ import type {
   MenuFacets,
   MenuHomeBannerConfig,
   MenuHomeSectionConfig,
+  MenuHomeSectionPublic,
   MenuItem,
   MenuPublicState,
 } from '../domain/menu'
@@ -59,16 +60,19 @@ export class MenuService {
     private readonly productRepository: ProductRepository
   ) {}
 
-  async getPublicMenu(): Promise<MenuPublicState> {
+  async getPublicMenu(options: { includeHomeProducts?: boolean } = {}): Promise<MenuPublicState> {
     const available = await this.getAvailableState()
     const selected = await this.getSelectedConfig(available)
     const dynamicItems = this.toDynamicItems(selected)
+    const homeSections = options.includeHomeProducts
+      ? await this.attachHomeSectionProducts(selected.homeSections)
+      : selected.homeSections
 
     return {
       items: [...fixedItems, ...dynamicItems],
       home: {
         banner: selected.homeBanner,
-        sections: selected.homeSections,
+        sections: homeSections,
       },
     }
   }
@@ -346,5 +350,27 @@ export class MenuService {
     }))
 
     return [...categoryItems, ...tagItems]
+  }
+
+  private async attachHomeSectionProducts(
+    sections: MenuHomeSectionConfig[]
+  ): Promise<MenuHomeSectionPublic[]> {
+    const sectionsWithProducts = await Promise.all(
+      sections.map(async (section) => {
+        if (!section.enabled || !section.value.trim()) {
+          return section
+        }
+
+        const filters = section.type === 'TAG' ? { tag: section.value } : { category: section.value }
+        const products = await this.productRepository.findAll(filters)
+
+        return {
+          ...section,
+          products: products.slice(0, 8),
+        }
+      })
+    )
+
+    return sectionsWithProducts
   }
 }

@@ -38,7 +38,7 @@ describe('MenuService', () => {
       ],
     })
 
-    const result = await service.getPublicMenu()
+    const result = await service.getPublicMenu({ includeHomeProducts: true })
     expect(result.items.some((item) => item.type === 'BESTSELLERS')).toBe(true)
     expect(result.items.some((item) => item.type === 'CATEGORY' && item.value === 'Oversized')).toBe(true)
     expect(result.items.some((item) => item.type === 'TAG' && item.value === 'Lancamento')).toBe(true)
@@ -48,6 +48,7 @@ describe('MenuService', () => {
     expect(result.home.sections.length).toBe(2)
     expect(result.home.sections[0]?.value).toBe('Oversized')
     expect(result.home.sections[0]?.enabled).toBe(true)
+    expect(result.home.sections[0]?.products?.[0]?.name).toBe('Camiseta Oversized')
   })
 
   it('keeps disabled sections persisted so admin can hide without losing configuration', async () => {

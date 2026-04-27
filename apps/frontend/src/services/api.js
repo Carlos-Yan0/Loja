@@ -193,6 +193,7 @@ const normalizeMenuHomeSection = (raw, index) => ({
   value: raw?.value ?? '',
   title: raw?.title ?? raw?.value ?? '',
   enabled: raw?.enabled !== false,
+  products: Array.isArray(raw?.products) ? raw.products.map(normalizeProduct) : [],
 })
 
 export const api = {
@@ -248,8 +249,12 @@ export const productsApi = {
 }
 
 export const menuApi = {
-  getPublic: async () => {
-    const response = await api.get('/menu')
+  getPublic: async (options = {}) => {
+    const response = await api.get(
+      `/menu${buildQueryString({
+        includeHomeProducts: options.includeHomeProducts ? 'true' : '',
+      })}`
+    )
     return {
       items: Array.isArray(response.items) ? response.items.map(normalizeMenuItem) : [],
       home: {

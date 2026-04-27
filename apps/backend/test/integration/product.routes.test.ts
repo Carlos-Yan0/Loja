@@ -103,4 +103,114 @@ describe('product routes', () => {
     expect(bySearch).toHaveLength(1)
     expect(bySearch[0]?.name).toContain('Social')
   })
+
+  it('returns an empty bestsellers list when there are no confirmed sales', async () => {
+    const { app, productRepository } = createTestApp()
+
+    await productRepository.create({
+      name: 'Produto sem venda A',
+      price: 49.9,
+      category: 'Teste',
+      tags: ['novo'],
+      stock: 10,
+    })
+
+    await productRepository.create({
+      name: 'Produto sem venda B',
+      price: 59.9,
+      category: 'Teste',
+      tags: ['novo'],
+      stock: 10,
+    })
+
+    const response = await app.handle(new Request('http://localhost/products?sort=bestsellers'))
+    expect(response.status).toBe(200)
+
+    const body = await readJson<Array<{ id: string }>>(response)
+    expect(body).toEqual([])
+  })
+
+  it('ranks bestsellers by confirmed quantity sold and ignores non-confirmed orders', async () => {
+    const { app, productRepository, orderRepository } = createTestApp()
+
+    const alpha = await productRepository.create({
+      name: 'Alpha',
+      price: 30,
+      category: 'Ranking',
+      tags: ['teste'],
+      stock: 30,
+    })
+
+    const beta = await productRepository.create({
+      name: 'Beta',
+      price: 30,
+      category: 'Ranking',
+      tags: ['teste'],
+      stock: 30,
+    })
+
+    const gamma = await productRepository.create({
+      name: 'Gamma',
+      price: 30,
+      category: 'Ranking',
+      tags: ['teste'],
+      stock: 30,
+    })
+
+    const betaConfirmedOrder = await orderRepository.create({
+      userId: crypto.randomUUID(),
+      payMethod: 'PIX',
+      items: [{ productId: beta.id, quantity: 3, price: beta.price }],
+      shipping: 0,
+      total: 90,
+    })
+    await orderRepository.confirmPayment(betaConfirmedOrder.id)
+
+    const alphaConfirmedOrder = await orderRepository.create({
+      userId: crypto.randomUUID(),
+      payMethod: 'PIX',
+      items: [{ productId: alpha.id, quantity: 3, price: alpha.price }],
+      shipping: 0,
+      total: 90,
+    })
+    await orderRepository.confirmPayment(alphaConfirmedOrder.id)
+
+    const alphaAwaitingPaymentOrder = await orderRepository.create({
+      userId: crypto.randomUUID(),
+      payMethod: 'PIX',
+      items: [{ productId: alpha.id, quantity: 2, price: alpha.price }],
+      shipping: 0,
+      total: 60,
+    })
+
+    const gammaCanceledOrder = await orderRepository.create({
+      userId: crypto.randomUUID(),
+      payMethod: 'PIX',
+      items: [{ productId: gamma.id, quantity: 8, price: gamma.price }],
+      shipping: 0,
+      total: 240,
+    })
+    await orderRepository.updateStatus(gammaCanceledOrder.id, 'CANCELED')
+
+    const response = await app.handle(new Request('http://localhost/products?sort=bestsellers'))
+    expect(response.status).toBe(200)
+
+    const body = await readJson<Array<{ id: string; name: string; soldQuantity?: number }>>(response)
+    expect(body.map((product) => product.name)).toEqual(['Alpha', 'Beta'])
+    expect(body.map((product) => product.soldQuantity)).toEqual([3, 3])
+    expect(body.some((product) => product.id === gamma.id)).toBe(false)
+
+    const awaitingResponse = await app.handle(
+      new Request('http://localhost/products?sort=bestsellers&search=Alpha')
+    )
+    const awaitingBody = await readJson<Array<{ name: string; soldQuantity?: number }>>(awaitingResponse)
+    expect(awaitingBody).toEqual([
+      expect.objectContaining({
+        name: 'Alpha',
+        soldQuantity: 3,
+      }),
+    ])
+
+    expect(alphaAwaitingPaymentOrder.status).toBe('AWAITING_PAYMENT')
+  })
 })

@@ -1,3 +1,5 @@
+import type { Product } from '../../product/domain/product'
+
 export type MenuItemType = 'BESTSELLERS' | 'CATEGORY' | 'TAG'
 export type MenuFacetType = 'CATEGORY' | 'TAG'
 export type MenuBannerTargetType = 'BESTSELLERS' | 'CATEGORY' | 'TAG' | 'PRODUCT'
@@ -44,6 +46,10 @@ export interface MenuHomeSectionConfig {
   enabled: boolean
 }
 
+export interface MenuHomeSectionPublic extends MenuHomeSectionConfig {
+  products?: Product[]
+}
+
 export interface MenuConfigInput {
   categories: string[]
   tags: string[]
@@ -63,6 +69,6 @@ export interface MenuPublicState {
   items: MenuItem[]
   home: {
     banner: MenuHomeBannerConfig
-    sections: MenuHomeSectionConfig[]
+    sections: MenuHomeSectionPublic[]
   }
 }

@@ -9,7 +9,18 @@ const forbiddenResponse = (set: { status?: number }, message = 'Acesso negado') 
 
 export const createMenuRoutes = (menuController: MenuController) =>
   new Elysia({ prefix: '/menu' })
-    .get('/', () => menuController.getPublicMenu())
+    .get(
+      '/',
+      ({ query }) =>
+        menuController.getPublicMenu({
+          includeHomeProducts: query.includeHomeProducts === 'true',
+        }),
+      {
+        query: t.Object({
+          includeHomeProducts: t.Optional(t.UnionEnum(['true', 'false'])),
+        }),
+      }
+    )
     .use(authPlugin)
     .get('/admin', ({ role, set }) => {
       if (role !== 'ADMIN') {

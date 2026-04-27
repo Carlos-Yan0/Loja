@@ -14,19 +14,70 @@ const COOKIE_OPTS = {
   path: '/',
 } as const
 
-export const authRoutes = new Elysia({ prefix: '/auth' })
+interface AuthRouteUser {
+  id: string
+  role: string
+  passwordHash: string
+}
+
+interface AuthRoutesDependencies {
+  findUserByEmail(email: string): Promise<AuthRouteUser | null>
+  verifyPassword(password: string, passwordHash: string): Promise<boolean>
+}
+
+const clearAuthCookies = (cookie: {
+  accessToken?: { set(input: Record<string, unknown>): unknown }
+  refreshToken?: { set(input: Record<string, unknown>): unknown }
+}) => {
+  const expiredCookie = {
+    ...COOKIE_OPTS,
+    value: '',
+    maxAge: 0,
+    expires: new Date(0),
+  }
+
+  cookie.accessToken?.set(expiredCookie)
+  cookie.refreshToken?.set(expiredCookie)
+}
+
+const liveDependencies: AuthRoutesDependencies = {
+  async findUserByEmail(email) {
+    const user = await getPrismaClient().user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        role: true,
+        password: true,
+      },
+    })
+
+    return user
+      ? {
+          id: user.id,
+          role: user.role,
+          passwordHash: user.password,
+        }
+      : null
+  },
+  verifyPassword(password, passwordHash) {
+    return Bun.password.verify(password, passwordHash)
+  },
+}
+
+export const createAuthRoutes = (dependencies: AuthRoutesDependencies = liveDependencies) =>
+  new Elysia({ prefix: '/auth' })
   .post(
     '/login',
     async ({ body, cookie, set }) => {
-      const prisma = getPrismaClient()
-      const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } })
+      const normalizedEmail = body.email.trim().toLowerCase()
+      const user = await dependencies.findUserByEmail(normalizedEmail)
 
       if (!user) {
         set.status = 401
         return { message: 'Credenciais invalidas.' }
       }
 
-      const passwordMatches = await Bun.password.verify(body.password, user.password)
+      const passwordMatches = await dependencies.verifyPassword(body.password, user.passwordHash)
       if (!passwordMatches) {
         set.status = 401
         return { message: 'Credenciais invalidas.' }
@@ -51,6 +102,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   .post('/refresh', ({ cookie, set }) => {
     const token = cookie.refreshToken?.value
     if (!token) {
+      clearAuthCookies(cookie)
       set.status = 401
       return { message: 'Refresh token nao encontrado.' }
     }
@@ -72,15 +124,17 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
       return { message: 'Tokens renovados com sucesso.' }
     } catch {
+      clearAuthCookies(cookie)
       set.status = 401
       return { message: 'Refresh token invalido.' }
     }
   })
   .post('/logout', ({ cookie }) => {
-    cookie.accessToken.remove()
-    cookie.refreshToken.remove()
+    clearAuthCookies(cookie)
     return { message: 'Logout realizado com sucesso.' }
   })
   .use(authPlugin)
   .get('/me', ({ userId, role }) => ({ id: userId, role }))
   .post('/me', ({ userId, role }) => ({ id: userId, role }))
+
+export const authRoutes = createAuthRoutes()

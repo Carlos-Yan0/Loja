@@ -6,6 +6,7 @@ export interface Product {
   tags: string[]
   stock: number
   images: string[]
+  soldQuantity?: number
 }
 
 export interface CreateProductInput {

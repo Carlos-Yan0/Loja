@@ -4,8 +4,8 @@ import type { MenuConfigInput } from '../domain/menu'
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
-  getPublicMenu() {
-    return this.menuService.getPublicMenu()
+  getPublicMenu(options?: { includeHomeProducts?: boolean }) {
+    return this.menuService.getPublicMenu(options)
   }
 
   getAdminState() {

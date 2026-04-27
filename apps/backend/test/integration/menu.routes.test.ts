@@ -73,7 +73,9 @@ describe('menu routes', () => {
     )
     expect(updateResponse.status).toBe(200)
 
-    const publicAfterResponse = await app.handle(new Request('http://localhost/menu'))
+    const publicAfterResponse = await app.handle(
+      new Request('http://localhost/menu?includeHomeProducts=true')
+    )
     const publicAfter = await readJson<{
       items: Array<{ type: string; label: string }>
       home: {
@@ -82,7 +84,13 @@ describe('menu routes', () => {
           targetType: string
           targetValue: string
         }
-        sections: Array<{ type: string; value: string; title: string; enabled: boolean }>
+        sections: Array<{
+          type: string
+          value: string
+          title: string
+          enabled: boolean
+          products?: Array<{ name: string }>
+        }>
       }
     }>(
       publicAfterResponse
@@ -106,6 +114,11 @@ describe('menu routes', () => {
     expect(
       publicAfter.home.sections.some(
         (section) => section.type === 'TAG' && section.value === 'Streetwear' && section.enabled === false
+      )
+    ).toBe(true)
+    expect(
+      publicAfter.home.sections.some(
+        (section) => section.type === 'CATEGORY' && section.value === 'Masculino' && section.products?.length === 1
       )
     ).toBe(true)
   })

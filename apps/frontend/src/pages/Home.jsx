@@ -91,21 +91,17 @@ export function Home() {
           return
         }
 
-        const menu = await menuApi.getPublic()
-        const sections = Array.isArray(menu.home?.sections)
-          ? menu.home.sections.filter((section) => section.enabled && String(section.value ?? '').trim()).slice(0, 4)
+        const menu = await menuApi.getPublic({ includeHomeProducts: true })
+        const sectionsWithProducts = Array.isArray(menu.home?.sections)
+          ? menu.home.sections
+              .filter((section) => section.enabled && String(section.value ?? '').trim())
+              .slice(0, 4)
+              .map((section) => ({
+                ...section,
+                products: Array.isArray(section.products) ? section.products.slice(0, 8) : [],
+                link: toSectionLink(section),
+              }))
           : []
-        const sectionsWithProducts = await Promise.all(
-          sections.map(async (section) => {
-            const sectionFilters = section.type === 'TAG' ? { tag: section.value } : { category: section.value }
-            const products = await productsApi.list(sectionFilters)
-            return {
-              ...section,
-              products: products.slice(0, 8),
-              link: toSectionLink(section),
-            }
-          })
-        )
 
         if (!active) return
         setState({
@@ -146,6 +142,14 @@ export function Home() {
     return 'Lancamentos da loja'
   }, [filters])
 
+  const emptyMessage = useMemo(() => {
+    if (filters.sort === 'bestsellers') {
+      return 'Ainda nao ha produtos vendidos.'
+    }
+
+    return 'Nenhum produto disponivel para esse filtro.'
+  }, [filters.sort])
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -168,7 +172,7 @@ export function Home() {
         <section id="produtos" className={styles.section}>
           <h2 className={styles.resultsTitle}>{sectionTitle}</h2>
           {state.products.length === 0 ? (
-            <p className={styles.empty}>Nenhum produto disponivel para esse filtro.</p>
+            <p className={styles.empty}>{emptyMessage}</p>
           ) : (
             <ul className={styles.grid}>
               {state.products.map((product) => (

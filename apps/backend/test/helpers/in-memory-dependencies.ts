@@ -1,5 +1,6 @@
 import { createApiApp } from '../../src/app'
 import type { AppControllers } from '../../src/bootstrap/create-live-dependencies'
+import type { AnyElysia } from 'elysia'
 import type { AddressRepository } from '../../src/modules/address/application/address-repository'
 import { AddressService } from '../../src/modules/address/application/address-service'
 import { AddressController } from '../../src/modules/address/presentation/address-controller'
@@ -63,6 +64,11 @@ import type { MenuConfig } from '../../src/modules/menu/domain/menu'
 
 export class InMemoryProductRepository implements ProductRepository {
   public readonly items = new Map<string, Product>()
+  private orderRepository?: InMemoryOrderRepository
+
+  linkOrderRepository(orderRepository: InMemoryOrderRepository) {
+    this.orderRepository = orderRepository
+  }
 
   async create(input: CreateProductInput) {
     const product: Product = {
@@ -83,25 +89,56 @@ export class InMemoryProductRepository implements ProductRepository {
     const search = filters?.search?.toLowerCase()
     const category = filters?.category?.toLowerCase()
     const tag = filters?.tag?.toLowerCase()
+    const matchesFilters = (item: Product) => {
+      if (search) {
+        const tagString = item.tags.join(' ').toLowerCase()
+        const searchable = `${item.name} ${item.category} ${tagString}`.toLowerCase()
+        if (!searchable.includes(search)) return false
+      }
+
+      if (category && !item.category.toLowerCase().includes(category)) {
+        return false
+      }
+
+      if (tag && !item.tags.some((entry) => entry.toLowerCase().includes(tag))) {
+        return false
+      }
+
+      return true
+    }
+
+    if (filters?.sort === 'BESTSELLERS') {
+      const confirmedStatuses = new Set<OrderStatus>(['PROCESSING', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED'])
+      const soldQuantityByProductId = new Map<string, number>()
+
+      for (const order of this.orderRepository?.items.values() ?? []) {
+        if (!confirmedStatuses.has(order.status)) continue
+
+        for (const item of order.items) {
+          soldQuantityByProductId.set(
+            item.productId,
+            (soldQuantityByProductId.get(item.productId) ?? 0) + item.quantity
+          )
+        }
+      }
+
+      return [...this.items.values()]
+        .filter((item) => (soldQuantityByProductId.get(item.id) ?? 0) > 0)
+        .filter(matchesFilters)
+        .map((item) => ({
+          ...item,
+          soldQuantity: soldQuantityByProductId.get(item.id) ?? 0,
+        }))
+        .sort((left, right) => {
+          const quantityDiff = (right.soldQuantity ?? 0) - (left.soldQuantity ?? 0)
+          if (quantityDiff !== 0) return quantityDiff
+          return String(left.name ?? '').localeCompare(String(right.name ?? ''), 'pt-BR')
+        })
+        .map((item) => structuredClone(item))
+    }
 
     return [...this.items.values()]
-      .filter((item) => {
-        if (search) {
-          const tagString = item.tags.join(' ').toLowerCase()
-          const searchable = `${item.name} ${item.category} ${tagString}`.toLowerCase()
-          if (!searchable.includes(search)) return false
-        }
-
-        if (category && !item.category.toLowerCase().includes(category)) {
-          return false
-        }
-
-        if (tag && !item.tags.some((entry) => entry.toLowerCase().includes(tag))) {
-          return false
-        }
-
-        return true
-      })
+      .filter(matchesFilters)
       .sort((left, right) =>
         String(left.name ?? '').localeCompare(String(right.name ?? ''), 'pt-BR')
       )
@@ -160,6 +197,8 @@ export class InMemoryMenuConfigRepository implements MenuConfigRepository {
     homeBanner: {
       enabled: false,
       imageUrl: '',
+      ctaEnabled: true,
+      ctaTransparent: false,
       ctaLabel: 'Explorar agora',
       targetType: 'BESTSELLERS',
       targetValue: '',
@@ -219,6 +258,19 @@ export class InMemoryUserRepository implements UserRepository {
   async findById(id: string) {
     const user = this.items.get(id)
     return user ? this.toPublic(user) : null
+  }
+
+  async findAuthByEmail(email: string) {
+    const normalizedEmail = email.trim().toLowerCase()
+    const user = [...this.items.values()].find((entry) => entry.email === normalizedEmail)
+
+    return user
+      ? {
+          id: user.id,
+          role: user.role,
+          passwordHash: user.passwordHash,
+        }
+      : null
   }
 
   async update(id: string, input: UpdateUserInput & { password?: string }) {
@@ -692,6 +744,7 @@ export const createInMemoryDependencies = (): InMemoryDependencies => {
   const addressRepository = new InMemoryAddressRepository()
   const postalCodeGateway = new InMemoryPostalCodeGateway()
   const orderRepository = new InMemoryOrderRepository(userRepository, productRepository)
+  productRepository.linkOrderRepository(orderRepository)
   const paymentRepository = new InMemoryPaymentRepository()
   const paymentGateway = new InMemoryPaymentGateway()
   const passwordHasher = new FakePasswordHasher()
@@ -738,9 +791,9 @@ export const createInMemoryDependencies = (): InMemoryDependencies => {
   }
 }
 
-export const createTestApp = () => {
+export const createTestApp = (options: { authRoutes?: AnyElysia } = {}) => {
   const dependencies = createInMemoryDependencies()
-  const app = createApiApp(dependencies.controllers)
+  const app = createApiApp(dependencies.controllers, options)
 
   return { app, ...dependencies }
 }

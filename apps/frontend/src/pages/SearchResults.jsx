@@ -82,6 +82,14 @@ export function SearchResults() {
     return `${products.length} resultado${products.length !== 1 ? 's' : ''}`;
   }, [loading, products.length]);
 
+  const emptyMessage = useMemo(() => {
+    if (filters.sort === 'bestsellers') {
+      return 'Ainda nao ha produtos vendidos.';
+    }
+
+    return 'Nenhum produto encontrado para esse filtro.';
+  }, [filters.sort]);
+
   if (error) {
     return (
       <div className={styles.error}>
@@ -103,7 +111,7 @@ export function SearchResults() {
         </div>
       ) : products.length === 0 ? (
         <div className={styles.empty}>
-          <p>Nenhum produto encontrado para esse filtro.</p>
+          <p>{emptyMessage}</p>
         </div>
       ) : (
         <ul className={styles.grid}>

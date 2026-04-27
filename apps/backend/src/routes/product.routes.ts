@@ -11,12 +11,15 @@ export const createProductRoutes = (productController: ProductController) =>
   new Elysia({ prefix: '/products' })
     .get(
       '/',
-      ({ query }) =>
+      ({ query, request }) =>
         productController.list({
           search: query.search,
           category: query.category,
           tag: query.tag,
-          sort: query.sort === 'bestsellers' ? 'BESTSELLERS' : undefined,
+          sort:
+            new URL(request.url).searchParams.get('sort') === 'bestsellers'
+              ? 'BESTSELLERS'
+              : undefined,
         }),
       {
         query: t.Object({

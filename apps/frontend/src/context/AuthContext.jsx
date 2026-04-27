@@ -13,10 +13,14 @@ export function AuthProvider({ children }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      await authApi.refresh()
       await hydrateUser()
     } catch {
-      setUser(null)
+      try {
+        await authApi.refresh()
+        await hydrateUser()
+      } catch {
+        setUser(null)
+      }
     } finally {
       setLoading(false)
     }
