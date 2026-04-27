@@ -1,12 +1,27 @@
 import { Elysia, t } from 'elysia'
 import { authPlugin } from '../middlewares/auth.middleware'
 import type { PaymentController } from '../modules/payment/presentation/payment-controller'
+import type { PaymentTransaction } from '../modules/payment/domain/payment'
 import { env } from '../config/env'
 import { validateMercadoPagoWebhookSignature } from '../modules/payment/infrastructure/mercado-pago-webhook-signature'
 
 const forbiddenResponse = (set: { status?: number }, message = 'Acesso negado') => {
   set.status = 403
   return { message, code: 'FORBIDDEN' }
+}
+
+const buildWalletBrickPayload = (transaction: PaymentTransaction) => {
+  const publicKey = env.mercadoPago.publicKey?.trim()
+  const preferenceId = transaction.externalId?.trim()
+
+  if (transaction.provider !== 'MERCADO_PAGO' || !publicKey || !preferenceId) {
+    return null
+  }
+
+  return {
+    publicKey,
+    preferenceId,
+  }
 }
 
 export const createPaymentRoutes = (paymentController: PaymentController) =>
@@ -104,7 +119,10 @@ export const createPaymentRoutes = (paymentController: PaymentController) =>
         set.status = 201
         return {
           message: 'Checkout de pagamento iniciado com sucesso.',
-          data: transaction,
+          data: {
+            ...transaction,
+            walletBrick: buildWalletBrickPayload(transaction),
+          },
         }
       },
       {

@@ -57,7 +57,7 @@ describe('ShippingService', () => {
     })
 
     expect(quote.destination.cep).toBe('89234135')
-    expect(quote.destination.state).toBe('PR')
+    expect(quote.destination.state).toBe('SC')
     expect(quote.total).toBe(quote.subtotal + quote.shipping)
   })
 })

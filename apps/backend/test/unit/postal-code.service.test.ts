@@ -13,7 +13,7 @@ describe('PostalCodeService', () => {
     const result = await service.lookup('89234-135')
 
     expect(result.cep).toBe('89234135')
-    expect(result.state).toBe('PR')
+    expect(result.state).toBe('SC')
     expect(result.city).toBe('Nao informado')
   })
 
@@ -43,7 +43,7 @@ describe('PostalCodeService', () => {
 
     expect(result.cep).toBe('89234135')
     expect(result.city).toBe('Nao informado')
-    expect(result.state).toBe('PR')
+    expect(result.state).toBe('SC')
   })
 
   it('preserves app-error shaped not found responses', async () => {

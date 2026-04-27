@@ -177,7 +177,45 @@ export class PaymentService {
   }
 
   private async reconcileTransaction(transactionId: string | undefined, externalId: string) {
-    const providerPayment = await this.paymentProviderGateway.getPayment(externalId)
+    const transactionFromId = transactionId
+      ? await this.paymentRepository.findTransactionById(transactionId)
+      : null
+    const fallbackExternalReference = transactionFromId?.externalReference
+
+    let providerPayment
+    try {
+      providerPayment = await this.paymentProviderGateway.getPayment(externalId)
+    } catch (error) {
+      if (
+        !fallbackExternalReference ||
+        typeof this.paymentProviderGateway.getPaymentByExternalReference !== 'function'
+      ) {
+        throw error
+      }
+
+      const fallbackPayment = await this.paymentProviderGateway.getPaymentByExternalReference(
+        fallbackExternalReference
+      )
+      if (!fallbackPayment) {
+        return transactionFromId
+      }
+
+      providerPayment = fallbackPayment
+    }
+
+    if (
+      !providerPayment.externalReference &&
+      fallbackExternalReference &&
+      typeof this.paymentProviderGateway.getPaymentByExternalReference === 'function'
+    ) {
+      const fallbackPayment = await this.paymentProviderGateway.getPaymentByExternalReference(
+        fallbackExternalReference
+      )
+      if (fallbackPayment) {
+        providerPayment = fallbackPayment
+      }
+    }
+
     const transactionByExternalId = await this.paymentRepository.findTransactionByExternalId(
       this.paymentProviderGateway.providerName,
       providerPayment.externalId
@@ -185,7 +223,7 @@ export class PaymentService {
 
     const resolvedTransaction =
       transactionByExternalId ??
-      (transactionId ? await this.paymentRepository.findTransactionById(transactionId) : null)
+      transactionFromId
 
     const resolvedOrderId = resolvedTransaction?.orderId ?? providerPayment.externalReference
     if (!resolvedOrderId) {
@@ -222,6 +260,10 @@ export class PaymentService {
         externalId: providerPayment.externalId,
         metadata: providerPayment.payload,
       })
+    }
+
+    if (providerPayment.paymentMethod && providerPayment.paymentMethod !== order.payMethod) {
+      await this.orderRepository.updatePayMethod(order.id, providerPayment.paymentMethod)
     }
 
     const nextOrderStatus = mapPaymentStatusToOrderStatus(providerPayment.status, order.status)

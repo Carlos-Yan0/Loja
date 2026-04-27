@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { MercadoPagoWalletBrick } from '../components/MercadoPagoWalletBrick'
 import { ReceiptCard } from '../components/ReceiptCard'
 import { useAuth } from '../context/useAuth'
 import { useCart } from '../context/useCart'
 import { addressesApi, ordersApi, paymentsApi, postalCodeApi, shippingApi } from '../services/api'
 import { formatCep, formatPrice } from '../utils/format'
 import { buildAddressForPersistence } from '../utils/order'
+import { getCheckoutReturnMessage, getWalletBrickConfig, readCheckoutReturn } from '../utils/payment'
+import { printElementById } from '../utils/print'
+import { buildReceiptFromOrder, canViewReceiptForOrder } from '../utils/receipt'
 import { validateCheckoutAddress } from '../utils/validation'
 import styles from './Checkout.module.css'
 
-const payMethods = [
-  { value: 'PIX', label: 'PIX' },
-  { value: 'CREDIT_CARD', label: 'Cartão de crédito' },
-  { value: 'BOLETO', label: 'Boleto' },
-]
 
 const emptyAddressForm = {
   cep: '',
@@ -34,10 +33,13 @@ const paymentStatusLabel = {
   REFUNDED: 'Reembolsado',
 }
 
+const mercadoPagoPublicKey = import.meta.env.VITE_MERCADO_PAGO_PUBLIC_KEY ?? ''
+
 export function Checkout() {
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { items, totalPrice, clearCart } = useCart()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [addresses, setAddresses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,9 +52,10 @@ export function Checkout() {
   const [successOrder, setSuccessOrder] = useState(null)
   const [editingAddressId, setEditingAddressId] = useState(null)
   const [saveAddress, setSaveAddress] = useState(false)
-  const [payMethod, setPayMethod] = useState('PIX')
   const [form, setForm] = useState(emptyAddressForm)
   const [shippingQuote, setShippingQuote] = useState(null)
+  const [walletBrickError, setWalletBrickError] = useState('')
+  const [returnContext, setReturnContext] = useState(null)
 
   useEffect(() => {
     if (!successOrder?.order?.id || successOrder?.payment?.status !== 'PENDING') {
@@ -89,57 +92,8 @@ export function Checkout() {
     }
   }, [successOrder])
 
-  const handlePrintReceipt = () => {
-    const receiptElement = document.getElementById('receipt-print-area')
-    if (!receiptElement) return
-
-    const printWindow = window.open('', '_blank', 'width=720,height=920')
-    if (!printWindow) return
-
-    printWindow.document.open()
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-        <head>
-          <meta charset="UTF-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Notinha do pedido</title>
-          ${document.head.innerHTML}
-          <style>
-            html, body {
-              margin: 0;
-              padding: 0;
-              background: #fff;
-            }
-            body {
-              padding: 1rem;
-            }
-            @page {
-              margin: 10mm;
-            }
-          </style>
-        </head>
-        <body>
-          ${receiptElement.outerHTML}
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-
-    const printNow = () => {
-      printWindow.focus()
-      printWindow.print()
-      printWindow.close()
-    }
-
-    if (printWindow.document.readyState === 'complete') {
-      setTimeout(printNow, 80)
-      return
-    }
-
-    printWindow.onload = () => {
-      setTimeout(printNow, 80)
-    }
+  const handlePrintReceipt = (printAreaId) => {
+    printElementById(printAreaId, { title: 'Notinha do pedido' })
   }
 
   const shippingPayload = useMemo(
@@ -151,6 +105,22 @@ export function Checkout() {
       })),
     }),
     [form.cep, items]
+  )
+
+  const checkoutReturn = useMemo(() => readCheckoutReturn(location.search), [location.search])
+  const paymentForAction = successOrder?.payment ?? returnContext?.payment ?? null
+  const canShowSuccessReceipt = useMemo(() => {
+    if (!successOrder?.order || !successOrder?.receipt) return false
+    return canViewReceiptForOrder(successOrder.order)
+  }, [successOrder])
+  const returnContextReceipt = useMemo(() => {
+    if (!returnContext?.order) return null
+    if (!canViewReceiptForOrder(returnContext.order)) return null
+    return buildReceiptFromOrder(returnContext.order)
+  }, [returnContext])
+  const walletBrickConfig = useMemo(
+    () => getWalletBrickConfig(paymentForAction, { publicKey: mercadoPagoPublicKey }),
+    [paymentForAction]
   )
 
   const loadAddresses = useCallback(async () => {
@@ -182,6 +152,54 @@ export function Checkout() {
       .catch((requestError) => setError(requestError.message || 'Não foi possível carregar seus endereços.'))
       .finally(() => setLoading(false))
   }, [authLoading, isAuthenticated, loadAddresses, navigate])
+
+  useEffect(() => {
+    if (!isAuthenticated || !checkoutReturn?.orderId || successOrder?.order?.id) {
+      return
+    }
+
+    let active = true
+    const paymentMessage = getCheckoutReturnMessage(checkoutReturn.status)
+
+    Promise.all([
+      ordersApi.get(checkoutReturn.orderId),
+      paymentsApi.getOrderPayment(checkoutReturn.orderId, { sync: true }),
+    ])
+      .then(([order, payment]) => {
+        if (!active) return
+        setReturnContext({
+          orderId: checkoutReturn.orderId,
+          status: checkoutReturn.status,
+          message: paymentMessage,
+          order,
+          payment,
+        })
+      })
+      .catch(() => {
+        if (!active) return
+        setReturnContext({
+          orderId: checkoutReturn.orderId,
+          status: checkoutReturn.status,
+          message: paymentMessage,
+          order: null,
+          payment: null,
+        })
+      })
+
+    return () => {
+      active = false
+    }
+  }, [checkoutReturn, isAuthenticated, successOrder?.order?.id])
+
+  useEffect(() => {
+    setWalletBrickError('')
+  }, [walletBrickConfig?.preferenceId])
+
+  useEffect(() => {
+    if (!checkoutReturn) {
+      setReturnContext(null)
+    }
+  }, [checkoutReturn])
 
   useEffect(() => {
     if (!isAuthenticated || items.length === 0 || form.cep.replace(/\D/g, '').length !== 8) {
@@ -309,7 +327,7 @@ export function Checkout() {
 
     try {
       const result = await ordersApi.create({
-        payMethod,
+        payMethod: 'PIX',
         deliveryAddress: {
           cep: validation.payload.cep,
           number: validation.payload.number,
@@ -337,6 +355,7 @@ export function Checkout() {
         ...result,
         payment,
       })
+      setReturnContext(null)
       setShippingQuote(null)
     } catch (requestError) {
       setError(requestError.message || 'Erro ao finalizar pedido.')
@@ -359,19 +378,124 @@ export function Checkout() {
     return (
         <div className={styles.success}>
           <h2>Pedido realizado com sucesso!</h2>
-          <p>Confira abaixo a notinha da sua compra e imprima quando quiser.</p>
-          {warning && <p className={styles.warning}>{warning}</p>}
           <p>
-            Status do pagamento:{' '}
-            <strong>
-              {paymentStatusLabel[successOrder.payment?.status] ??
-                successOrder.payment?.status ??
-                'Nao iniciado'}
-            </strong>
+            {canShowSuccessReceipt
+              ? 'Pagamento aprovado. Sua notinha esta liberada abaixo.'
+              : 'Finalize o pagamento para liberar sua notinha. Assim que aprovado, ela aparece aqui automaticamente.'}
           </p>
-          {successOrder.payment?.checkoutUrl && successOrder.payment.status === 'PENDING' && (
+          {warning && <p className={styles.warning}>{warning}</p>}
+            <p>
+              Status do pagamento:{' '}
+              <strong>
+                {paymentStatusLabel[successOrder.payment?.status] ??
+                  successOrder.payment?.status ??
+                  'Nao iniciado'}
+              </strong>
+            </p>
+            {successOrder.payment?.status === 'PENDING' && walletBrickConfig && (
+              <section className={styles.walletBrickSection}>
+                <h3>Finalizar pagamento</h3>
+                <p className={styles.walletBrickHint}>
+                  Continue com Mercado Pago no botao abaixo.
+                </p>
+                <div className={styles.walletBrickContainer}>
+                  <MercadoPagoWalletBrick
+                    preferenceId={walletBrickConfig.preferenceId}
+                    publicKey={walletBrickConfig.publicKey}
+                    onReady={() => setWalletBrickError('')}
+                    onError={() =>
+                      setWalletBrickError(
+                        'Nao foi possivel carregar o checkout integrado. Use o link alternativo.'
+                      )
+                    }
+                  />
+                </div>
+                {walletBrickError && <p className={styles.warning}>{walletBrickError}</p>}
+                {successOrder.payment?.checkoutUrl && (
+                  <a
+                    href={successOrder.payment.checkoutUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.successCta}
+                  >
+                    Abrir checkout alternativo
+                  </a>
+                )}
+              </section>
+            )}
+            {successOrder.payment?.status === 'PENDING' &&
+              !walletBrickConfig &&
+              successOrder.payment?.checkoutUrl && (
+                <a
+                  href={successOrder.payment.checkoutUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.successCta}
+                >
+                  Ir para pagamento
+                </a>
+              )}
+            {canShowSuccessReceipt && (
+              <ReceiptCard receipt={successOrder.receipt} onPrint={handlePrintReceipt} />
+            )}
+        <Link to="/" className={styles.successCta}>
+          Voltar à loja
+        </Link>
+      </div>
+    )
+  }
+
+  if (returnContext) {
+    return (
+      <div className={styles.success}>
+        <h2>Status do pagamento atualizado</h2>
+        {returnContext.message && <p>{returnContext.message}</p>}
+        {returnContext.orderId && <p>Pedido: {returnContext.orderId}</p>}
+        <p>
+          Status:{' '}
+          <strong>
+            {paymentStatusLabel[returnContext.payment?.status] ??
+              returnContext.payment?.status ??
+              'Nao identificado'}
+          </strong>
+        </p>
+
+        {returnContext.payment?.status === 'PENDING' && walletBrickConfig && (
+          <section className={styles.walletBrickSection}>
+            <h3>Finalizar pagamento</h3>
+            <p className={styles.walletBrickHint}>
+              Continue com Mercado Pago no botao abaixo.
+            </p>
+            <div className={styles.walletBrickContainer}>
+              <MercadoPagoWalletBrick
+                preferenceId={walletBrickConfig.preferenceId}
+                publicKey={walletBrickConfig.publicKey}
+                onReady={() => setWalletBrickError('')}
+                onError={() =>
+                  setWalletBrickError(
+                    'Nao foi possivel carregar o checkout integrado. Use o link alternativo.'
+                  )
+                }
+              />
+            </div>
+            {walletBrickError && <p className={styles.warning}>{walletBrickError}</p>}
+            {returnContext.payment?.checkoutUrl && (
+              <a
+                href={returnContext.payment.checkoutUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.successCta}
+              >
+                Abrir checkout alternativo
+              </a>
+            )}
+          </section>
+        )}
+        {returnContext.payment?.status === 'PENDING' &&
+          !walletBrickConfig &&
+          returnContext.payment?.checkoutUrl && (
             <a
-              href={successOrder.payment.checkoutUrl}
+              href={returnContext.payment.checkoutUrl}
               target="_blank"
               rel="noreferrer"
               className={styles.successCta}
@@ -379,9 +503,15 @@ export function Checkout() {
               Ir para pagamento
             </a>
           )}
-          <ReceiptCard receipt={successOrder.receipt} onPrint={handlePrintReceipt} />
+        {returnContextReceipt && (
+          <ReceiptCard receipt={returnContextReceipt} onPrint={handlePrintReceipt} />
+        )}
+
+        <Link to="/meus-pedidos" className={styles.successCta}>
+          Ver meus pedidos
+        </Link>
         <Link to="/" className={styles.successCta}>
-          Voltar à loja
+          Voltar a loja
         </Link>
       </div>
     )
@@ -502,23 +632,6 @@ export function Checkout() {
           </label>
         </section>
 
-        <section className={`${styles.section} ${styles.sectionMain}`}>
-          <h2 className={styles.sectionTitle}>Forma de pagamento</h2>
-          <div className={styles.radioGroup}>
-            {payMethods.map((option) => (
-              <label key={option.value} className={styles.radio}>
-                <input
-                  type="radio"
-                  name="payMethod"
-                  value={option.value}
-                  checked={payMethod === option.value}
-                  onChange={(event) => setPayMethod(event.target.value)}
-                />
-                {option.label}
-              </label>
-            ))}
-          </div>
-        </section>
 
         <aside className={`${styles.summary} ${styles.sectionSidebar}`}>
           <h2 className={styles.sectionTitle}>Resumo do pedido</h2>

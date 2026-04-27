@@ -144,6 +144,14 @@ const normalizePaymentTransaction = (raw) => ({
   checkoutUrl: raw.checkoutUrl ?? null,
   idempotencyKey: raw.idempotencyKey ?? '',
   metadata: raw.metadata ?? null,
+  walletBrick:
+    raw.walletBrick && typeof raw.walletBrick === 'object'
+      ? {
+          preferenceId:
+            typeof raw.walletBrick.preferenceId === 'string' ? raw.walletBrick.preferenceId : null,
+          publicKey: typeof raw.walletBrick.publicKey === 'string' ? raw.walletBrick.publicKey : null,
+        }
+      : null,
   createdAt: raw.createdAt,
   updatedAt: raw.updatedAt,
 })

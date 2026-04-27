@@ -1,3 +1,5 @@
+import type { PaymentMethod } from '../../order/domain/order'
+
 export type PaymentProvider = 'MERCADO_PAGO' | 'MOCK'
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED' | 'EXPIRED' | 'REFUNDED'
 
@@ -41,6 +43,7 @@ export interface ProviderPaymentDetails {
   status: PaymentStatus
   amount: number | null
   currency: string | null
+  paymentMethod?: PaymentMethod | null
   payload: Record<string, unknown>
 }
 

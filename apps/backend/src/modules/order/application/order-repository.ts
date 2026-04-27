@@ -1,4 +1,4 @@
-import type { CreateOrderInput, Order, OrderStatus } from '../domain/order'
+import type { CreateOrderInput, Order, OrderStatus, PaymentMethod } from '../domain/order'
 
 export interface PricedOrderItem {
   productId: string
@@ -18,5 +18,6 @@ export interface OrderRepository {
   findById(id: string): Promise<Order | null>
   findByUserId(userId: string): Promise<Order[]>
   updateStatus(id: string, status: OrderStatus): Promise<Order>
+  updatePayMethod(id: string, payMethod: PaymentMethod): Promise<Order>
   confirmPayment(id: string): Promise<Order>
 }

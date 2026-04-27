@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ordersApi } from '../../services/api'
+import { ReceiptCard } from '../../components/ReceiptCard'
 import { StatusBadge } from '../../components/StatusBadge'
+import { ordersApi, paymentsApi } from '../../services/api'
 import { formatDateTime, formatPrice } from '../../utils/format'
+import { printElementById } from '../../utils/print'
+import { buildReceiptFromOrder, canViewReceiptForOrder } from '../../utils/receipt'
 import styles from './AdminOrders.module.css'
 
 const orderStatuses = [
@@ -29,6 +32,19 @@ const paymentLabels = {
 }
 
 const statusAll = 'ALL'
+const autoRefreshablePaymentStatuses = new Set(['PENDING'])
+
+const mapPaymentFromTransaction = (payment) => ({
+  provider: payment.provider,
+  status: payment.status,
+  checkoutUrl: payment.checkoutUrl ?? null,
+  externalId: payment.externalId ?? null,
+  updatedAt: payment.updatedAt,
+})
+
+const hasOpenPayment = (order) =>
+  order?.status === 'AWAITING_PAYMENT' ||
+  autoRefreshablePaymentStatuses.has(order?.payment?.status)
 
 export function AdminOrders() {
   const [orders, setOrders] = useState([])
@@ -38,6 +54,7 @@ export function AdminOrders() {
   const [updating, setUpdating] = useState(null)
   const [filter, setFilter] = useState(statusAll)
   const [expanded, setExpanded] = useState(null)
+  const [activeReceipt, setActiveReceipt] = useState(null)
 
   const showToast = (message) => {
     setToast(message)
@@ -59,6 +76,17 @@ export function AdminOrders() {
     load()
   }, [load])
 
+  useEffect(() => {
+    const shouldAutoRefresh = orders.some(hasOpenPayment)
+    if (!shouldAutoRefresh) return undefined
+
+    const intervalId = setInterval(() => {
+      load()
+    }, 10000)
+
+    return () => clearInterval(intervalId)
+  }, [load, orders])
+
   const handleStatusChange = async (orderId, newStatus) => {
     setUpdating(orderId)
     try {
@@ -72,6 +100,42 @@ export function AdminOrders() {
     } finally {
       setUpdating(null)
     }
+  }
+
+  const handleViewReceipt = async (orderId) => {
+    try {
+      const [payment, order] = await Promise.all([
+        paymentsApi.getOrderPayment(orderId, { sync: true }),
+        ordersApi.get(orderId),
+      ])
+
+      const mergedOrder = payment
+        ? {
+            ...order,
+            payment: mapPaymentFromTransaction(payment),
+          }
+        : order
+
+      setOrders((current) =>
+        current.map((entry) => (entry.id === orderId ? mergedOrder : entry))
+      )
+
+      if (!canViewReceiptForOrder(mergedOrder)) {
+        showToast('Notinha disponivel somente apos pagamento aprovado.')
+        return
+      }
+
+      setActiveReceipt({
+        orderId,
+        receipt: buildReceiptFromOrder(mergedOrder),
+      })
+    } catch (requestError) {
+      showToast(requestError.message || 'Nao foi possivel carregar a notinha.')
+    }
+  }
+
+  const handlePrintReceipt = (printAreaId) => {
+    printElementById(printAreaId, { title: 'Cupom fiscal simplificado' })
   }
 
   const filteredOrders =
@@ -195,6 +259,16 @@ export function AdminOrders() {
                   </div>
                 </div>
 
+                {canViewReceiptForOrder(order) && (
+                  <button
+                    type="button"
+                    className={styles.receiptBtn}
+                    onClick={() => handleViewReceipt(order.id)}
+                  >
+                    Ver notinha
+                  </button>
+                )}
+
                 {order.items.length > 0 && (
                   <button
                     type="button"
@@ -239,6 +313,7 @@ export function AdminOrders() {
                   <th className={styles.th}>Frete</th>
                   <th className={styles.th}>Total</th>
                   <th className={styles.th}>Status</th>
+                  <th className={styles.th}>Cupom</th>
                   <th className={styles.th}>Itens</th>
                 </tr>
               </thead>
@@ -291,6 +366,19 @@ export function AdminOrders() {
                       </div>
                     </td>
                     <td className={styles.td}>
+                      {canViewReceiptForOrder(order) ? (
+                        <button
+                          type="button"
+                          className={styles.receiptBtnTable}
+                          onClick={() => handleViewReceipt(order.id)}
+                        >
+                          Ver notinha
+                        </button>
+                      ) : (
+                        <span className={styles.payMethod}>Aguardando pagamento</span>
+                      )}
+                    </td>
+                    <td className={styles.td}>
                       <button
                         type="button"
                         className={styles.expandBtnTable}
@@ -320,6 +408,14 @@ export function AdminOrders() {
               </tbody>
             </table>
           </div>
+          {activeReceipt?.receipt && (
+            <section className={styles.receiptPanel}>
+              <h2 className={styles.receiptTitle}>
+                Cupom do pedido #{activeReceipt.orderId.slice(0, 8).toUpperCase()}
+              </h2>
+              <ReceiptCard receipt={activeReceipt.receipt} onPrint={handlePrintReceipt} />
+            </section>
+          )}
         </>
       )}
     </div>

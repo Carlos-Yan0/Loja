@@ -132,6 +132,74 @@
   font-weight: 600;
 }
 
+.payBtn,
+.receiptBtn {
+  margin-top: var(--space-md);
+  width: 100%;
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-weight: 600;
+}
+
+.payBtn {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.receiptBtn {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.walletBrickSection {
+  margin-top: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  padding: var(--space-sm);
+}
+
+.walletBrickHint {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.walletBrickContainer {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  display: block;
+  -webkit-overflow-scrolling: touch;
+}
+
+.walletBrickContainer :global(div) {
+  width: 100% !important;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.walletBrickContainer :global(iframe) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: block;
+  margin: 0 auto;
+}
+
+.payLink {
+  display: inline-block;
+  margin-top: var(--space-sm);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.receiptPanel {
+  margin-top: var(--space-md);
+}
+
 .cancelHint {
   margin: var(--space-md) 0 0;
   font-size: 0.82rem;

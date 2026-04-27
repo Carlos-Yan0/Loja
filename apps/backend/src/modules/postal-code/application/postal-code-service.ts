@@ -1,20 +1,10 @@
 import type { PostalCodeGateway } from './postal-code-gateway'
 import type { PostalCodeAddress } from '../domain/postal-code'
 import { isAppError } from '../../../shared/errors/app-error'
+import { inferStateFromCep } from '../../../shared/utils/cep-state'
 import { normalizeCep } from '../../../shared/utils/normalize'
 
-const inferredStateByCepPrefix: Record<string, string> = {
-  '0': 'SP',
-  '1': 'SP',
-  '2': 'RJ',
-  '3': 'MG',
-  '4': 'BA',
-  '5': 'PE',
-  '6': 'PA',
-  '7': 'DF',
-  '8': 'PR',
-  '9': 'RS',
-}
+const defaultFallbackState = (process.env.STORE_ORIGIN_STATE ?? 'SC').trim().toUpperCase()
 
 export class PostalCodeService {
   constructor(private readonly postalCodeGateway: PostalCodeGateway) {}
@@ -39,7 +29,7 @@ export class PostalCodeService {
       street: '',
       neighborhood: '',
       city: 'Nao informado',
-      state: inferredStateByCepPrefix[cep[0] ?? ''] ?? 'SP',
+      state: inferStateFromCep(cep, defaultFallbackState),
     }
   }
 }

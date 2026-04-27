@@ -124,4 +124,118 @@ describe('PaymentService', () => {
       })
     ).rejects.toThrow('Pedido nao encontrado')
   })
+
+  it('updates order payment method using provider data during reconciliation', async () => {
+    const { controllers, productRepository, userRepository, paymentGateway } = createInMemoryDependencies()
+
+    const user = await userRepository.create({
+      name: 'Cliente Teste',
+      email: 'cliente2@teste.com',
+      phone: '11999999998',
+      password: 'hashed',
+    })
+
+    const product = await productRepository.create({
+      name: 'Produto teste',
+      price: 120,
+      category: 'Roupas',
+      stock: 8,
+    })
+
+    const orderResult = await controllers.orderController.create({
+      userId: user.id,
+      payMethod: 'PIX',
+      deliveryAddress: {
+        cep: '01001000',
+        number: '101',
+      },
+      items: [
+        {
+          productId: product.id,
+          quantity: 1,
+        },
+      ],
+    })
+
+    const checkout = await controllers.paymentController.createCheckoutForOrder({
+      orderId: orderResult.order.id,
+      userId: user.id,
+      role: 'CUSTOMER',
+    })
+
+    expect(checkout.externalId).toBeTruthy()
+    paymentGateway.setPaymentMethod(checkout.externalId as string, 'CREDIT_CARD')
+
+    await controllers.paymentController.processWebhook({
+      provider: 'MERCADO_PAGO',
+      eventType: 'payment',
+      eventId: 'event-method-1',
+      externalId: checkout.externalId ?? undefined,
+      signatureValid: true,
+      payload: {
+        id: 'event-method-1',
+      },
+    })
+
+    const updatedOrder = await controllers.orderController.getById(orderResult.order.id)
+    expect(updatedOrder.payMethod).toBe('CREDIT_CARD')
+  })
+
+  it('syncs payment by external reference when stored external id is not a payment id', async () => {
+    const { controllers, productRepository, userRepository, paymentRepository, paymentGateway } =
+      createInMemoryDependencies()
+
+    const user = await userRepository.create({
+      name: 'Cliente Sandbox',
+      email: 'sandbox@teste.com',
+      phone: '11999999997',
+      password: 'hashed',
+    })
+
+    const product = await productRepository.create({
+      name: 'Produto sandbox',
+      price: 90,
+      category: 'Roupas',
+      stock: 6,
+    })
+
+    const orderResult = await controllers.orderController.create({
+      userId: user.id,
+      payMethod: 'PIX',
+      deliveryAddress: {
+        cep: '01001000',
+        number: '102',
+      },
+      items: [
+        {
+          productId: product.id,
+          quantity: 1,
+        },
+      ],
+    })
+
+    const checkout = await controllers.paymentController.createCheckoutForOrder({
+      orderId: orderResult.order.id,
+      userId: user.id,
+      role: 'CUSTOMER',
+    })
+
+    paymentGateway.setPaymentMethod(checkout.externalId as string, 'CREDIT_CARD')
+    await paymentRepository.updateTransaction(checkout.id, {
+      externalId: 'pref_fake_only',
+    })
+
+    const syncedPayment = await controllers.paymentController.getOrderPayment({
+      orderId: orderResult.order.id,
+      userId: user.id,
+      role: 'CUSTOMER',
+      sync: true,
+    })
+
+    expect(syncedPayment?.status).toBe('APPROVED')
+
+    const syncedOrder = await controllers.orderController.getById(orderResult.order.id)
+    expect(syncedOrder.status).toBe('PROCESSING')
+    expect(syncedOrder.payMethod).toBe('CREDIT_CARD')
+  })
 })

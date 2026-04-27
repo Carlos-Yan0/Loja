@@ -13,4 +13,5 @@ export interface PaymentProviderGateway {
   readonly providerName: 'MERCADO_PAGO' | 'MOCK'
   createCheckout(input: CreateProviderCheckoutInput): Promise<ProviderCheckoutSession>
   getPayment(externalId: string): Promise<ProviderPaymentDetails>
+  getPaymentByExternalReference?(externalReference: string): Promise<ProviderPaymentDetails | null>
 }

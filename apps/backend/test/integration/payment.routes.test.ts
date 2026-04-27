@@ -12,7 +12,7 @@ const buildWebhookSignature = (dataId: string, requestId: string, ts: string) =>
 
 describe('payment routes', () => {
   it('creates checkout for an order and updates order status via idempotent webhook', async () => {
-    const { app, productRepository } = createTestApp()
+    const { app, productRepository, paymentGateway } = createTestApp()
     const userId = crypto.randomUUID()
     const cookie = createAuthCookie({ sub: userId, role: 'CUSTOMER' })
 
@@ -60,10 +60,14 @@ describe('payment routes', () => {
     )
 
     expect(createCheckoutResponse.status).toBe(201)
-    const checkoutBody = await readJson<{ data: { externalId: string; status: string } }>(
+    const checkoutBody = await readJson<{
+      data: { externalId: string; status: string; walletBrick: { preferenceId: string; publicKey: string } | null }
+    }>(
       createCheckoutResponse
     )
     expect(checkoutBody.data.status).toBe('PENDING')
+    expect(checkoutBody.data.walletBrick).toBeNull()
+    paymentGateway.setPaymentMethod(checkoutBody.data.externalId, 'CREDIT_CARD')
 
     const getPaymentResponse = await app.handle(
       new Request(`http://localhost/payments/order/${orderId}`, {
@@ -143,8 +147,9 @@ describe('payment routes', () => {
     )
 
     expect(orderResponse.status).toBe(200)
-    const orderBody = await readJson<{ status: string }>(orderResponse)
+    const orderBody = await readJson<{ status: string; payMethod: string }>(orderResponse)
     expect(orderBody.status).toBe('PROCESSING')
+    expect(orderBody.payMethod).toBe('CREDIT_CARD')
 
     const updatedProduct = await productRepository.findById(product.id)
     expect(updatedProduct?.stock).toBe(4)

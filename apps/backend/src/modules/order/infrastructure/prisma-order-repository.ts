@@ -190,6 +190,18 @@ export class PrismaOrderRepository implements OrderRepository {
     return toDomain(order)
   }
 
+  async updatePayMethod(id: string, payMethod: PaymentMethod) {
+    const order = await withDatabaseErrorHandling(() =>
+      this.prisma.order.update({
+        where: { id },
+        data: { PayMethod: payMethod },
+        select: orderSelect,
+      })
+    )
+
+    return toDomain(order)
+  }
+
   async confirmPayment(id: string) {
     const order = await withDatabaseErrorHandling(() =>
       this.prisma.$transaction(async (transaction) => {

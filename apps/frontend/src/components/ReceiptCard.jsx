@@ -9,16 +9,19 @@ const payMethodLabels = {
 
 export function ReceiptCard({ receipt, onPrint }) {
   if (!receipt) return null
+  const printAreaId = receipt.orderNumber
+    ? `receipt-print-area-${receipt.orderNumber}`
+    : 'receipt-print-area'
 
   return (
     <section className={styles.wrapper}>
       <div className={styles.actions}>
-        <button type="button" onClick={onPrint} className={styles.printBtn}>
+        <button type="button" onClick={() => onPrint?.(printAreaId)} className={styles.printBtn}>
           Imprimir notinha
         </button>
       </div>
 
-      <article className={styles.receipt} id="receipt-print-area">
+      <article className={styles.receipt} id={printAreaId}>
         <header className={styles.header}>
           <div>
             <p className={styles.brand}>GF STORE</p>

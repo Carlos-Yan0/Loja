@@ -4,7 +4,7 @@
     "lancamento"
   ],
   "homeBanner": {
-    "enabled": true,
+    "enabled": false,
     "imageUrl": "https://nfdztgufbpcrdtddhphs.supabase.co/storage/v1/object/public/banners/home/6f55cec7-673b-46ee-9a7a-cf4ee5b6ae31.webp",
     "ctaLabel": "camisas de times",
     "targetType": "CATEGORY",

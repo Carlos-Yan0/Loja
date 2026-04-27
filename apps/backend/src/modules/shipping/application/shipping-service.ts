@@ -4,23 +4,16 @@ import type { ProductRepository } from '../../product/application/product-reposi
 import type { ShippingQuote } from '../domain/shipping'
 import { badRequest, notFound } from '../../../shared/errors/error-factory'
 import { isAppError } from '../../../shared/errors/app-error'
+import { inferStateFromCep } from '../../../shared/utils/cep-state'
 import { ensureUuid, normalizeCep } from '../../../shared/utils/normalize'
 
-const sameRegionStates = new Set(['SP', 'RJ', 'MG', 'ES'])
-const nearbyStates = new Set(['PR', 'SC', 'RS', 'MS', 'GO', 'DF'])
-const storeState = (process.env.STORE_ORIGIN_STATE ?? 'SP').trim().toUpperCase()
-const inferredStateByCepPrefix: Record<string, string> = {
-  '0': 'SP',
-  '1': 'SP',
-  '2': 'RJ',
-  '3': 'MG',
-  '4': 'BA',
-  '5': 'PE',
-  '6': 'PA',
-  '7': 'DF',
-  '8': 'PR',
-  '9': 'RS',
-}
+const storeState = (process.env.STORE_ORIGIN_STATE ?? 'SC').trim().toUpperCase()
+const storeCity = (process.env.STORE_ORIGIN_CITY ?? 'JOINVILLE').trim().toUpperCase()
+const southStates = new Set(['PR', 'SC', 'RS'])
+const southeastStates = new Set(['SP', 'RJ', 'MG', 'ES'])
+const midwestStates = new Set(['GO', 'DF', 'MT', 'MS'])
+const northeastStates = new Set(['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'])
+const northStates = new Set(['AC', 'AM', 'AP', 'PA', 'RO', 'RR', 'TO'])
 
 export class ShippingService {
   constructor(
@@ -72,6 +65,7 @@ export class ShippingService {
 
     const subtotal = Number(items.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2))
     const shipping = this.calculateShipping({
+      city: destination.city,
       state: destination.state,
       itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
       subtotal,
@@ -83,36 +77,57 @@ export class ShippingService {
       subtotal,
       shipping,
       total: Number((subtotal + shipping).toFixed(2)),
-      estimatedDays: this.estimateDeliveryDays(destination.state),
+      estimatedDays: this.estimateDeliveryDays({
+        city: destination.city,
+        state: destination.state,
+      }),
     }
   }
 
-  private calculateShipping(input: { state: string; itemCount: number; subtotal: number }) {
+  private calculateShipping(input: {
+    city: string
+    state: string
+    itemCount: number
+    subtotal: number
+  }) {
+    const city = input.city.trim().toUpperCase()
     const state = input.state.toUpperCase()
     const itemWeightFactor = Math.max(0, input.itemCount - 1) * 3.5
     const orderValueFactor = input.subtotal >= 400 ? -4 : input.subtotal >= 200 ? -2 : 0
 
-    let regionalBase = 24
-
-    if (state === storeState) {
+    let regionalBase = 36
+    if (state === storeState && city === storeCity) {
+      regionalBase = 8
+    } else if (state === storeState) {
       regionalBase = 12
-    } else if (sameRegionStates.has(state)) {
+    } else if (southStates.has(state)) {
       regionalBase = 18
-    } else if (nearbyStates.has(state)) {
+    } else if (southeastStates.has(state)) {
       regionalBase = 24
-    } else {
+    } else if (midwestStates.has(state)) {
+      regionalBase = 28
+    } else if (northeastStates.has(state)) {
       regionalBase = 32
+    } else if (northStates.has(state)) {
+      regionalBase = 36
+    } else {
+      regionalBase = 34
     }
 
     return Number(Math.max(9.9, regionalBase + itemWeightFactor + orderValueFactor).toFixed(2))
   }
 
-  private estimateDeliveryDays(state: string) {
-    const normalized = state.toUpperCase()
+  private estimateDeliveryDays(input: { city: string; state: string }) {
+    const city = input.city.trim().toUpperCase()
+    const state = input.state.toUpperCase()
 
-    if (normalized === storeState) return 2
-    if (sameRegionStates.has(normalized)) return 4
-    if (nearbyStates.has(normalized)) return 6
+    if (state === storeState && city === storeCity) return 1
+    if (state === storeState) return 2
+    if (southStates.has(state)) return 4
+    if (southeastStates.has(state)) return 5
+    if (midwestStates.has(state)) return 6
+    if (northeastStates.has(state)) return 7
+    if (northStates.has(state)) return 9
     return 8
   }
 
@@ -135,7 +150,6 @@ export class ShippingService {
   }
 
   private inferStateFromCep(cep: string) {
-    const inferred = inferredStateByCepPrefix[cep[0] ?? '']
-    return inferred ?? storeState
+    return inferStateFromCep(cep, storeState)
   }
 }

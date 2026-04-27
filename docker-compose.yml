@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: loja-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loja}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-loja}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+    container_name: loja-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-loja}
+      PORT: 3000
+      BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-http://localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-replace-with-a-long-random-secret}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-replace-with-a-long-random-secret}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-products}
+      SUPABASE_STORAGE_BANNERS_BUCKET: ${SUPABASE_STORAGE_BANNERS_BUCKET:-banners}
+      UPLOAD_MAX_IMAGE_BYTES: ${UPLOAD_MAX_IMAGE_BYTES:-5242880}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-120}
+      RATE_LIMIT_MAX_UPLOAD_REQUESTS: ${RATE_LIMIT_MAX_UPLOAD_REQUESTS:-20}
+      RATE_LIMIT_MAX_WEBHOOK_REQUESTS: ${RATE_LIMIT_MAX_WEBHOOK_REQUESTS:-40}
+      MAX_JSON_PAYLOAD_BYTES: ${MAX_JSON_PAYLOAD_BYTES:-262144}
+      ORDER_CUSTOMER_CANCEL_WINDOW_HOURS: ${ORDER_CUSTOMER_CANCEL_WINDOW_HOURS:-8}
+      PAYMENT_CURRENCY: ${PAYMENT_CURRENCY:-BRL}
+      PAYMENT_PROVIDER_TIMEOUT_MS: ${PAYMENT_PROVIDER_TIMEOUT_MS:-10000}
+      PAYMENT_WEBHOOK_TOKEN: ${PAYMENT_WEBHOOK_TOKEN:-replace-with-a-strong-random-token}
+      MERCADO_PAGO_USE_MOCK: ${MERCADO_PAGO_USE_MOCK:-true}
+      MERCADO_PAGO_ACCESS_TOKEN: ${MERCADO_PAGO_ACCESS_TOKEN:-}
+      MERCADO_PAGO_PUBLIC_KEY: ${MERCADO_PAGO_PUBLIC_KEY:-}
+      MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
+      MERCADO_PAGO_WEBHOOK_MAX_SKEW_MS: ${MERCADO_PAGO_WEBHOOK_MAX_SKEW_MS:-300000}
+      MERCADO_PAGO_CHECKOUT_URL_MODE: ${MERCADO_PAGO_CHECKOUT_URL_MODE:-AUTO}
+      MERCADO_PAGO_API_BASE_URL: ${MERCADO_PAGO_API_BASE_URL:-https://api.mercadopago.com}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - ./apps/backend/storage:/app/apps/backend/storage
+      - ./apps/backend/data:/app/apps/backend/data
+
+volumes:
+  postgres_data:

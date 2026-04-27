@@ -219,6 +219,42 @@
 }
 .expandBtn:hover { background: var(--color-border); color: var(--color-text); }
 
+.receiptBtn {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.receiptBtnTable {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.receiptPanel {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.receiptTitle {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+}
+
 /* ── Items list (shared mobile + desktop) ── */
 .itemsList {
   list-style: none;

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { useAuth } from './context/useAuth';
@@ -17,6 +18,21 @@ import { AdminOrders } from './pages/admin/AdminOrders';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminMenu } from './pages/admin/AdminMenu';
 
+function CheckoutReturnRedirect() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+  const hasCheckoutReturn = params.get('payment') || params.get('orderId');
+
+  useEffect(() => {
+    if (!hasCheckoutReturn) return;
+    if (location.pathname === '/checkout') return;
+    navigate(`/checkout${location.search}`, { replace: true });
+  }, [hasCheckoutReturn, location.pathname, location.search, navigate]);
+
+  return null;
+}
+
 function RequireAdmin(){
   const { isAuthenticated, isAdmin, loading  } = useAuth();
   if(loading) return null;
@@ -27,6 +43,7 @@ function RequireAdmin(){
 function App() {
   return (
     <BrowserRouter>
+      <CheckoutReturnRedirect />
       <AuthProvider>
         <CartProvider>
           <Routes>

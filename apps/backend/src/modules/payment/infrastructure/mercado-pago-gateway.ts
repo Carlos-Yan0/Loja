@@ -2,6 +2,7 @@ import { env } from '../../../config/env'
 import { serviceUnavailable } from '../../../shared/errors/error-factory'
 import type { CreateProviderCheckoutInput, PaymentProviderGateway } from '../application/payment-provider-gateway'
 import type { ProviderCheckoutSession, ProviderPaymentDetails, PaymentStatus } from '../domain/payment'
+import type { PaymentMethod } from '../../order/domain/order'
 
 interface MercadoPagoPreferenceResponse {
   id?: string
@@ -15,6 +16,12 @@ interface MercadoPagoPaymentResponse {
   transaction_amount?: number
   currency_id?: string
   external_reference?: string
+  payment_type_id?: string
+  payment_method_id?: string
+}
+
+interface MercadoPagoPaymentSearchResponse {
+  results?: MercadoPagoPaymentResponse[]
 }
 
 const localhostHosts = new Set(['localhost', '127.0.0.1', '::1'])
@@ -55,6 +62,36 @@ const mapMercadoPagoStatus = (value: string | undefined): PaymentStatus => {
   return 'PENDING'
 }
 
+const mapMercadoPagoPaymentMethod = (
+  paymentTypeId: string | undefined,
+  paymentMethodId: string | undefined
+): PaymentMethod | null => {
+  const normalizedType = String(paymentTypeId ?? '').trim().toLowerCase()
+  const normalizedMethod = String(paymentMethodId ?? '').trim().toLowerCase()
+
+  if (normalizedMethod === 'pix' || normalizedType === 'bank_transfer') {
+    return 'PIX'
+  }
+
+  if (
+    normalizedType === 'ticket' ||
+    normalizedMethod.startsWith('bol') ||
+    normalizedMethod.includes('boleto')
+  ) {
+    return 'BOLETO'
+  }
+
+  if (
+    normalizedType === 'credit_card' ||
+    normalizedType === 'debit_card' ||
+    normalizedType === 'prepaid_card'
+  ) {
+    return 'CREDIT_CARD'
+  }
+
+  return null
+}
+
 const readJsonSafely = async (response: Response): Promise<Record<string, unknown>> => {
   try {
     return (await response.json()) as Record<string, unknown>
@@ -81,7 +118,7 @@ export class MercadoPagoGateway implements PaymentProviderGateway {
     }
 
     const webhookUrl = this.buildWebhookUrl()
-    const backUrlBase = `${env.frontendUrl.replace(/\/$/, '')}/checkout`
+    const backUrlBase = `${env.frontendUrl.replace(/\/$/, '')}`
     ensureHttpsOrLocalhost(webhookUrl, 'notification_url do Mercado Pago')
     ensureHttpsOrLocalhost(backUrlBase, 'FRONTEND_URL para back_urls do Mercado Pago')
 
@@ -102,9 +139,9 @@ export class MercadoPagoGateway implements PaymentProviderGateway {
         payMethod: input.paymentMethod,
       },
       back_urls: {
-        success: `${backUrlBase}?payment=success&orderId=${encodeURIComponent(input.externalReference)}`,
-        failure: `${backUrlBase}?payment=failure&orderId=${encodeURIComponent(input.externalReference)}`,
-        pending: `${backUrlBase}?payment=pending&orderId=${encodeURIComponent(input.externalReference)}`,
+        success: `${backUrlBase}/?payment=success&orderId=${encodeURIComponent(input.externalReference)}`,
+        failure: `${backUrlBase}/?payment=failure&orderId=${encodeURIComponent(input.externalReference)}`,
+        pending: `${backUrlBase}/?payment=pending&orderId=${encodeURIComponent(input.externalReference)}`,
       },
       auto_return: 'approved',
     }
@@ -171,7 +208,47 @@ export class MercadoPagoGateway implements PaymentProviderGateway {
     }
 
     const payload = (await readJsonSafely(response)) as MercadoPagoPaymentResponse
-    const resolvedExternalId = String(payload.id ?? externalId).trim()
+    return this.toProviderPaymentDetails(payload, externalId)
+  }
+
+  async getPaymentByExternalReference(externalReference: string): Promise<ProviderPaymentDetails | null> {
+    const accessToken = env.mercadoPago.accessToken?.trim()
+    if (!accessToken) {
+      throw serviceUnavailable('MERCADO_PAGO_ACCESS_TOKEN nao configurado.')
+    }
+
+    const query = new URLSearchParams({
+      external_reference: externalReference,
+      sort: 'date_created',
+      criteria: 'desc',
+      limit: '1',
+    }).toString()
+
+    const response = await this.request(`/v1/payments/search?${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw serviceUnavailable(
+        `Falha ao pesquisar pagamento no Mercado Pago: ${await getErrorMessage(response)}`
+      )
+    }
+
+    const payload = (await readJsonSafely(response)) as MercadoPagoPaymentSearchResponse
+    const payment = Array.isArray(payload.results) ? payload.results[0] : undefined
+    if (!payment) return null
+
+    return this.toProviderPaymentDetails(payment, externalReference)
+  }
+
+  private toProviderPaymentDetails(
+    payload: MercadoPagoPaymentResponse,
+    fallbackExternalId: string
+  ): ProviderPaymentDetails {
+    const resolvedExternalId = String(payload.id ?? fallbackExternalId).trim()
 
     return {
       externalId: resolvedExternalId,
@@ -183,6 +260,7 @@ export class MercadoPagoGateway implements PaymentProviderGateway {
           ? Number(payload.transaction_amount)
           : null,
       currency: typeof payload.currency_id === 'string' ? payload.currency_id : null,
+      paymentMethod: mapMercadoPagoPaymentMethod(payload.payment_type_id, payload.payment_method_id),
       payload: payload as Record<string, unknown>,
     }
   }

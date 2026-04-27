@@ -35,6 +35,47 @@
   text-decoration: none;
 }
 
+.walletBrickSection {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+}
+
+.walletBrickSection h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.walletBrickHint {
+  margin: var(--space-sm) 0 var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.walletBrickContainer {
+  min-height: 56px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  display: block;
+  -webkit-overflow-scrolling: touch;
+}
+
+.walletBrickContainer :global(div) {
+  width: 100% !important;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.walletBrickContainer :global(iframe) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  display: block;
+  margin: 0 auto;
+}
+
 .form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -303,12 +344,24 @@
     margin-bottom: var(--space-md);
   }
 
+  .success {
+    padding: var(--space-md);
+  }
+
   .section,
   .summary {
     padding: var(--space-md);
   }
 
   .inlineField .secondaryBtn {
+    width: 100%;
+  }
+
+  .walletBrickSection {
+    padding: var(--space-xs);
+  }
+
+  .successCta {
     width: 100%;
   }
 }

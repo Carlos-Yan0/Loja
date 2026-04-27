@@ -396,6 +396,20 @@ export class InMemoryOrderRepository implements OrderRepository {
     return structuredClone(updated)
   }
 
+  async updatePayMethod(id: string, payMethod: PaymentMethod) {
+    const current = this.items.get(id)
+    if (!current) throw new Error('order not found')
+
+    const updated: Order = {
+      ...current,
+      payMethod,
+      updatedAt: new Date().toISOString(),
+    }
+
+    this.items.set(id, updated)
+    return structuredClone(updated)
+  }
+
   async confirmPayment(id: string) {
     const current = this.items.get(id)
     if (!current) throw new Error('order not found')
@@ -534,6 +548,7 @@ export class InMemoryPaymentGateway implements PaymentProviderGateway {
       amount: number
       currency: string
       status: PaymentStatus
+      paymentMethod: PaymentMethod
     }
   >()
 
@@ -544,6 +559,7 @@ export class InMemoryPaymentGateway implements PaymentProviderGateway {
       amount: Number(input.amount.toFixed(2)),
       currency: input.currency,
       status: 'PENDING',
+      paymentMethod: input.paymentMethod,
     })
 
     return {
@@ -583,11 +599,54 @@ export class InMemoryPaymentGateway implements PaymentProviderGateway {
       status: payment.status,
       amount: payment.amount,
       currency: payment.currency,
+      paymentMethod: payment.paymentMethod,
       payload: {
         provider: 'mock',
         status: payment.status,
       },
     }
+  }
+
+  async getPaymentByExternalReference(externalReference: string): Promise<ProviderPaymentDetails | null> {
+    const foundEntry = [...this.payments.entries()].find(
+      ([, payment]) => payment.externalReference === externalReference
+    )
+    if (!foundEntry) return null
+
+    const [externalId, payment] = foundEntry
+    const normalizedPayment =
+      payment.status === 'PENDING'
+        ? {
+            ...payment,
+            status: 'APPROVED' as PaymentStatus,
+          }
+        : payment
+
+    this.payments.set(externalId, normalizedPayment)
+
+    return {
+      externalId,
+      externalReference: normalizedPayment.externalReference,
+      status: normalizedPayment.status,
+      amount: normalizedPayment.amount,
+      currency: normalizedPayment.currency,
+      paymentMethod: normalizedPayment.paymentMethod,
+      payload: {
+        provider: 'mock',
+        status: normalizedPayment.status,
+        recoveredBy: 'external_reference',
+      },
+    }
+  }
+
+  setPaymentMethod(externalId: string, paymentMethod: PaymentMethod) {
+    const payment = this.payments.get(externalId)
+    if (!payment) return
+
+    this.payments.set(externalId, {
+      ...payment,
+      paymentMethod,
+    })
   }
 }
 
