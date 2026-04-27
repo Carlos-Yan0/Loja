@@ -6,9 +6,18 @@ import {
   requiresPostalCodeFallback,
 } from '../utils/postal-code'
 
-const BASE = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/$/, '')
-  : '/api'
+const configuredApiUrl =
+  typeof import.meta.env.VITE_API_URL === 'string'
+    ? import.meta.env.VITE_API_URL.trim().replace(/\/$/, '')
+    : ''
+
+const browserHostname = typeof window !== 'undefined' ? window.location.hostname : ''
+const preferSameOriginApi =
+  Boolean(browserHostname) &&
+  browserHostname !== 'localhost' &&
+  browserHostname !== '127.0.0.1'
+
+const BASE = preferSameOriginApi ? '/api' : configuredApiUrl || '/api'
 
 const withBase = (path) => `${BASE}${path}`
 const buildQueryString = (params = {}) => {

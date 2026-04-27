@@ -320,6 +320,28 @@
 }
 
 @media (min-width: 769px) {
+  .top {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 1fr);
+    align-items: center;
+    column-gap: var(--space-lg);
+  }
+
+  .search {
+    width: min(100%, 360px);
+    justify-self: start;
+  }
+
+  .logo {
+    justify-self: center;
+  }
+
+  .actions {
+    justify-self: end;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
   .sidebarOverlay[data-open="true"],
   .sidebar[data-open="true"] {
     display: none;

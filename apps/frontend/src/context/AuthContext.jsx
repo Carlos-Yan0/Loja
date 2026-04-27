@@ -29,6 +29,13 @@ export function AuthProvider({ children }) {
   const login = useCallback(
     async (email, password) => {
       await authApi.login(email, password)
+      try {
+        await authApi.refresh()
+      } catch {
+        // When running cross-origin in stricter browsers, refresh can lag behind
+        // cookie propagation. We still try /me so the UI can recover when login
+        // succeeded and cookies are already available.
+      }
       await hydrateUser()
     },
     [hydrateUser]
