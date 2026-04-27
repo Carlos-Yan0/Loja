@@ -4,6 +4,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json bun.lock ./
 COPY apps/backend/package.json apps/backend/package.json
+COPY apps/frontend/package.json apps/frontend/package.json
 RUN bun install --frozen-lockfile --ignore-scripts
 
 FROM base AS backend-runner
@@ -12,6 +13,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/bun.lock ./bun.lock
 COPY --from=deps /app/apps/backend/package.json ./apps/backend/package.json
+COPY --from=deps /app/apps/frontend/package.json ./apps/frontend/package.json
 COPY . .
 RUN bunx --cwd apps/backend prisma generate
 EXPOSE 3000
