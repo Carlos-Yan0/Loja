@@ -1,6 +1,7 @@
 import type { ProductRepository } from './product-repository'
 import type { CreateProductInput, ProductFilters, UpdateProductInput } from '../domain/product'
 import { badRequest, notFound } from '../../../shared/errors/error-factory'
+import type { ProductCache } from './product-cache'
 import {
   ensureUuid,
   normalizeOptionalText,
@@ -35,10 +36,13 @@ const normalizeImageUrls = (images: string[] | undefined) => {
 }
 
 export class ProductService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly productCache?: ProductCache
+  ) {}
 
   async create(input: CreateProductInput) {
-    return this.productRepository.create({
+    const product = await this.productRepository.create({
       name: normalizeText(input.name, { field: 'Nome do produto', maxLength: 120 }),
       price: this.normalizePrice(input.price),
       category: normalizeText(input.category, { field: 'Categoria', maxLength: 80 }),
@@ -50,9 +54,12 @@ export class ProductService {
       stock: this.normalizeStock(input.stock),
       images: normalizeImageUrls(input.images) ?? [],
     })
+
+    await this.productCache?.bumpVersion()
+    return product
   }
 
-  findAll(filters?: ProductFilters) {
+  async findAll(filters?: ProductFilters) {
     const normalizedFilters: ProductFilters = {
       search: normalizeOptionalText(filters?.search, { field: 'Busca', maxLength: 80 }),
       category: normalizeOptionalText(filters?.category, { field: 'Categoria', maxLength: 80 }),
@@ -60,17 +67,26 @@ export class ProductService {
       sort: this.normalizeSort(filters?.sort),
     }
 
-    return this.productRepository.findAll(normalizedFilters)
+    const cached = await this.productCache?.getCachedList(normalizedFilters)
+    if (cached) return cached
+
+    const products = await this.productRepository.findAll(normalizedFilters)
+    await this.productCache?.setCachedList(normalizedFilters, products)
+    return products
   }
 
   async findById(id: string) {
     const productId = ensureUuid(id, 'Produto')
+    const cached = await this.productCache?.getCachedById(productId)
+    if (cached) return cached
+
     const product = await this.productRepository.findById(productId)
 
     if (!product) {
       throw notFound('Produto nao encontrado.')
     }
 
+    await this.productCache?.setCachedById(product)
     return product
   }
 
@@ -112,13 +128,16 @@ export class ProductService {
       throw badRequest('Nenhum campo valido foi enviado para atualizacao.')
     }
 
-    return this.productRepository.update(productId, payload)
+    const product = await this.productRepository.update(productId, payload)
+    await this.productCache?.bumpVersion()
+    return product
   }
 
   async delete(id: string) {
     const productId = ensureUuid(id, 'Produto')
     await this.findById(productId)
     await this.productRepository.delete(productId)
+    await this.productCache?.bumpVersion()
   }
 
   async appendImage(productId: string, imageUrl: string) {
@@ -132,7 +151,9 @@ export class ProductService {
       throw badRequest('Cada produto pode ter no maximo 10 imagens.')
     }
 
-    return this.productRepository.appendImage(product.id, imageUrl)
+    const updated = await this.productRepository.appendImage(product.id, imageUrl)
+    await this.productCache?.bumpVersion()
+    return updated
   }
 
   private normalizePrice(price: number) {

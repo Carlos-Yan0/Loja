@@ -68,6 +68,10 @@ export const env = {
       trimTrailingSlash(process.env.MERCADO_PAGO_API_BASE_URL) ?? 'https://api.mercadopago.com',
     useMockProvider: parseBoolean(process.env.MERCADO_PAGO_USE_MOCK, false),
   },
+  redis: {
+    url: process.env.REDIS_URL,
+    productsCacheTtlSeconds: parseNumber(process.env.PRODUCTS_CACHE_TTL_SECONDS, 60),
+  },
 }
 
 export const hasSupabaseStorageConfig = () =>

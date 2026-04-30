@@ -14,6 +14,7 @@ import { ViaCepGateway } from '../modules/postal-code/infrastructure/via-cep-gat
 import { PostalCodeService } from '../modules/postal-code/application/postal-code-service'
 import { PostalCodeController } from '../modules/postal-code/presentation/postal-code-controller'
 import { PrismaProductRepository } from '../modules/product/infrastructure/prisma-product-repository'
+import { ProductCache } from '../modules/product/application/product-cache'
 import { ProductService } from '../modules/product/application/product-service'
 import { ProductController } from '../modules/product/presentation/product-controller'
 import { ShippingService } from '../modules/shipping/application/shipping-service'
@@ -28,6 +29,7 @@ import { UploadProductImageService } from '../modules/upload/application/upload-
 import { UploadBannerImageService } from '../modules/upload/application/upload-banner-image-service'
 import { UploadController } from '../modules/upload/presentation/upload-controller'
 import { env, hasSupabaseStorageConfig, shouldUseMockPaymentProvider } from '../config/env'
+import { createRedisClient } from '../libs/redis'
 import { FileMenuConfigRepository } from '../modules/menu/infrastructure/file-menu-config-repository'
 import { MenuService } from '../modules/menu/application/menu-service'
 import { MenuController } from '../modules/menu/presentation/menu-controller'
@@ -62,7 +64,18 @@ export const createLiveDependencies = (): AppControllers => {
     ? new MockPaymentGateway()
     : new MercadoPagoGateway()
 
-  const productService = new ProductService(productRepository)
+  const productCache = env.redis.url
+    ? (() => {
+        const client = createRedisClient(env.redis.url)
+        client.connect().catch((error) => {
+          const message = error instanceof Error ? error.message : String(error)
+          console.error('[redis:connect_error]', message)
+        })
+        return new ProductCache(client, { ttlSeconds: env.redis.productsCacheTtlSeconds })
+      })()
+    : undefined
+
+  const productService = new ProductService(productRepository, productCache)
   const menuService = new MenuService(menuConfigRepository, productRepository)
   const postalCodeService = new PostalCodeService(postalCodeGateway)
   const shippingService = new ShippingService(postalCodeService, productRepository)
